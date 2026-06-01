@@ -283,7 +283,18 @@
       font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: 0.15s;
     }
     .ffmpeg-loading .retry-btn:hover { background: var(--accent-dim); }
-    .ffmpeg-loading .error-text { color: var(--red); font-size: 0.8rem; margin-top: 0.5rem; }
+    .ffmpeg-loading .error-text { color: #ff1744; font-size: 0.8rem; margin-top: 0.5rem; }
+    .ffmpeg-loading .dl-progress-track {
+      width: 100%; max-width: 360px; height: 6px; margin: 1rem auto 0.5rem;
+      background: var(--surface2); border-radius: 100px; overflow: hidden;
+    }
+    .ffmpeg-loading .dl-progress-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #a78bfa);
+      border-radius: 100px; transition: width 0.15s ease;
+    }
+    .ffmpeg-loading .dl-progress-label {
+      font-size: 0.75rem; color: var(--text3); margin-top: 0.25rem;
+    }
 
     footer {
       padding: 1rem 1.5rem; text-align: center; font-size: 0.75rem;
@@ -466,8 +477,9 @@
     <div class="ffmpeg-loading" id="ffmpegLoading">
       <div class="spinner"></div>
       <p id="ffmpegStatus">Loading FFmpeg engine...</p>
-      <p class="sub">Downloads ~21MB of WebAssembly code — cached after first load</p>
-      <p class="hint" id="ffmpegHint">Please wait, this may take 10-30 seconds on first visit</p>
+      <div class="dl-progress-track"><div class="dl-progress-fill" id="ffmpegDlFill"></div></div>
+      <p class="dl-progress-label" id="ffmpegDlLabel">0%</p>
+      <p class="sub">Downloads ~31MB once — cached in your browser after that</p>
       <p class="error-text" id="ffmpegError" style="display:none"></p>
       <button class="retry-btn" id="ffmpegRetry" style="display:none">Retry Loading</button>
     </div>
@@ -540,6 +552,8 @@
     const ffmpegStatus = $('ffmpegStatus');
     const ffmpegError = $('ffmpegError');
     const ffmpegRetry = $('ffmpegRetry');
+    const ffmpegDlFill = $('ffmpegDlFill');
+    const ffmpegDlLabel = $('ffmpegDlLabel');
     const progressSection = $('progressSection');
     const progressFill = $('progressFill');
     const progressStatus = $('progressStatus');
@@ -803,50 +817,95 @@
       });
     });
 
-    // Fetch a CDN asset and return a same-origin blob URL (required for Worker + WASM)
-    async function cdnToBlobURL(url, mimeType) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Failed to download ${url} (${res.status})`);
-      const buf = await res.arrayBuffer();
-      return URL.createObjectURL(new Blob([buf], { type: mimeType }));
+    // Same-origin asset URLs (vendor/ is deployed with the site — Workers cannot load from CDN)
+    function assetUrl(relativePath) {
+      const path = relativePath.startsWith('/') ? relativePath : '/' + relativePath;
+      return new URL(path, location.origin).href;
+    }
+
+    const FFMPEG_PATHS = {
+      classWorker: assetUrl('/vendor/ffmpeg/worker.js'),
+      core: assetUrl('/vendor/core/ffmpeg-core.js'),
+      wasm: assetUrl('/vendor/core/ffmpeg-core.wasm'),
+    };
+
+    function setEngineDownloadProgress(pct, detail) {
+      const p = Math.min(100, Math.max(0, Math.round(pct)));
+      ffmpegDlFill.style.width = p + '%';
+      ffmpegDlLabel.textContent = detail || (p + '%');
+    }
+
+    // Prefetch wasm with live byte progress (same-origin, cached after first visit)
+    function prefetchWithProgress(url, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(e.loaded, e.total);
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
+          else reject(new Error(`Failed to load engine (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error('Network error while loading video engine'));
+        xhr.send();
+      });
     }
 
     // ─── FFmpeg Load ───
     async function loadFFmpegEngine() {
       if (state.loaded && state.ffmpeg) return state.ffmpeg;
 
+      state.loaded = false;
+      state.ffmpeg = null;
+
       ffmpegError.style.display = 'none';
       ffmpegRetry.style.display = 'none';
       ffmpegLoading.classList.add('visible');
+      setEngineDownloadProgress(0, 'Starting...');
 
       try {
         ffmpegStatus.textContent = 'Loading FFmpeg library...';
+        setEngineDownloadProgress(3, 'Loading library...');
         const { FFmpeg } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm');
         const ffmpeg = new FFmpeg();
 
-        const workerCdn = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js';
-        const coreCdn = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js';
-        const wasmCdn = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm';
+        ffmpeg.on('progress', ({ progress: p }) => {
+          if (state.progress.total > 0) {
+            const pct = Math.round(p * 100);
+            showProgress(state.progress.text, pct);
+          }
+        });
 
-        ffmpegStatus.textContent = 'Downloading video engine... (~21MB, cached after first load)';
+        ffmpegStatus.textContent = 'Downloading video engine...';
+        await prefetchWithProgress(FFMPEG_PATHS.wasm, (loaded, total) => {
+          const pct = total > 0 ? Math.min(92, (loaded / total) * 92) : 50;
+          const mb = (loaded / (1024 * 1024)).toFixed(1);
+          const totalMb = total > 0 ? (total / (1024 * 1024)).toFixed(1) : '?';
+          setEngineDownloadProgress(pct, `${Math.round(pct)}% — ${mb} / ${totalMb} MB`);
+        });
 
-        // All three must be blob URLs — cross-origin Worker scripts are blocked by the browser
-        const [workerURL, coreURL, wasmURL] = await Promise.all([
-          cdnToBlobURL(workerCdn, 'text/javascript'),
-          cdnToBlobURL(coreCdn, 'text/javascript'),
-          cdnToBlobURL(wasmCdn, 'application/wasm'),
-        ]);
+        ffmpegStatus.textContent = 'Starting video engine...';
+        setEngineDownloadProgress(95, 'Initializing WebAssembly...');
 
-        ffmpegStatus.textContent = 'Initializing FFmpeg...';
-        await ffmpeg.load({ coreURL, wasmURL, workerURL });
+        // classWorkerURL must be same-origin (not CDN) or Worker + its imports break
+        await ffmpeg.load({
+          classWorkerURL: FFMPEG_PATHS.classWorker,
+          coreURL: FFMPEG_PATHS.core,
+          wasmURL: FFMPEG_PATHS.wasm,
+        });
 
         state.loaded = true;
         state.ffmpeg = ffmpeg;
+        setEngineDownloadProgress(100, 'Ready');
         ffmpegLoading.classList.remove('visible');
+        showToast('Video engine ready');
         console.log('FFmpeg loaded successfully');
         return ffmpeg;
       } catch (err) {
-        ffmpegLoading.classList.remove('visible');
+        ffmpegLoading.classList.add('visible');
+        setEngineDownloadProgress(0, 'Failed');
         throw err;
       }
     }
