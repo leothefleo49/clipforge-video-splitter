@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClipForge · Video Splitter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0b0d11;
+      --surface: #14171c;
+      --surface2: #1c2027;
+      --surface3: #262b33;
+      --border: #2a2f38;
+      --text: #e8eaed;
+      --text2: #9aa0a8;
+      --accent: #6c5ce7;
+      --accent-hover: #7f71f0;
+      --accent-dim: rgba(108, 92, 231, 0.15);
+      --green: #00c853;
+      --orange: #ff9100;
+      --red: #ff1744;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    html { font-size: 15px; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* ─── Header ─── */
+    header {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    .logo svg { width: 28px; height: 28px; }
+    .logo span { color: var(--text2); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(108,92,231,0.25);
+    }
+    /* ─── Main Layout ─── */
+    .app { flex: 1; display: flex; flex-direction: column; max-width: 960px; width: 100%; margin: 0 auto; padding: 1.5rem; }
+    /* ─── Drop Zone ─── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface);
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--accent-dim); }
+    .drop-zone .icon { font-size: 2.4rem; margin-bottom: 0.5rem; display: block; opacity: 0.5; }
+    .drop-zone h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .drop-zone p { color: var(--text2); font-size: 0.85rem; }
+    .drop-zone input[type="file"] { display: none; }
+    .drop-zone .format-badge {
+      display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 0.8rem;
+    }
+    .drop-zone .format-badge span {
+      font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;
+      background: var(--surface2); color: var(--text2);
+    }
+    /* ─── File Info ─── */
+    .file-info {
+      display: none;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+      align-items: center;
+      gap: 1rem;
+    }
+    .file-info.visible { display: flex; }
+    .file-info .name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-info .meta { color: var(--text2); font-size: 0.8rem; white-space: nowrap; }
+    .file-info .change-btn {
+      font-size: 0.75rem; padding: 4px 12px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent; color: var(--text2);
+      cursor: pointer; transition: 0.15s;
+    }
+    .file-info .change-btn:hover { background: var(--surface2); color: var(--text); }
+    /* ─── Mode Selection ─── */
+    .mode-section {
+      display: none;
+      margin-top: 1.2rem;
+    }
+    .mode-section.visible { display: block; }
+    .mode-tabs {
+      display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-sm);
+      padding: 4px; border: 1px solid var(--border);
+    }
+    .mode-tab {
+      flex: 1; padding: 0.55rem 0.5rem; text-align: center; font-weight: 500; font-size: 0.8rem;
+      border-radius: 6px; cursor: pointer; transition: 0.15s; color: var(--text2); border: none; background: transparent;
+    }
+    .mode-tab.active { background: var(--accent); color: #fff; }
+    .mode-tab:not(.active):hover { background: var(--surface2); color: var(--text); }
+    /* ─── Controls ─── */
+    .controls {
+      display: none;
+      margin-top: 1rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      border: 1px solid var(--border);
+    }
+    .controls.visible { display: block; }
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .control-group label { font-size: 0.78rem; font-weight: 500; color: var(--text2); }
+    .control-group input, .control-group select {
+      padding: 0.5rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 0.85rem;
+      font-family: inherit; outline: none; transition: 0.15s;
+    }
+    .control-group input:focus, .control-group select:focus { border-color: var(--accent); }
+    .control-group input[type="range"] {
+      padding: 0; border: none; background: transparent; accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .range-row { display: flex; align-items: center; gap: 0.5rem; }
+    .range-row input[type="range"] { flex: 1; }
+    .range-row .value { min-width: 2.8rem; text-align: right; font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+    .full-width { grid-column: 1 / -1; }
+    /* ─── Advanced Toggle ─── */
+    .advanced-toggle {
+      display: none;
+      margin-top: 0.75rem; padding: 0.5rem 0; font-size: 0.8rem; font-weight: 500;
+      color: var(--text2); cursor: pointer; user-select: none; border: none; background: none;
+      transition: 0.15s; align-items: center; gap: 0.4rem;
+    }
+    .advanced-toggle.visible { display: inline-flex; }
+    .advanced-toggle:hover { color: var(--accent); }
+    .advanced-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+    .advanced-toggle .arrow.open { transform: rotate(90deg); }
+    .advanced-options {
+      display: none;
+      margin-top: 0.75rem;
+      grid-column: 1 / -1;
+    }
+    .advanced-options.open { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    /* ─── Split Button ─── */
+    .split-btn {
+      display: none;
+      width: 100%; margin-top: 1.2rem; padding: 0.85rem;
+      font-size: 1rem; font-weight: 700; font-family: inherit;
+      border: none; border-radius: var(--radius-sm);
+      background: var(--accent); color: #fff; cursor: pointer;
+      transition: 0.15s; letter-spacing: 0.01em;
+    }
+    .split-btn.visible { display: block; }
+    .split-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+    .split-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* ─── Progress ─── */
+    .progress-section {
+      display: none;
+      margin-top: 1rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      border: 1px solid var(--border);
+    }
+    .progress-section.visible { display: block; }
+    .progress-bar-track {
+      width: 100%; height: 6px; background: var(--surface2); border-radius: 100px;
+      overflow: hidden; margin-bottom: 0.6rem;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #a78bfa);
+      border-radius: 100px; transition: width 0.3s ease;
+    }
+    .progress-status { font-size: 0.82rem; color: var(--text2); display: flex; justify-content: space-between; }
+    .progress-status .eta { color: var(--text2); }
+    /* ─── Output ─── */
+    .output-section {
+      display: none;
+      margin-top: 1rem;
+    }
+    .output-section.visible { display: block; }
+    .output-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;
+    }
+    .output-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .output-header .count { color: var(--text2); font-size: 0.8rem; }
+    .output-grid {
+      display: grid; gap: 0.5rem;
+    }
+    .output-item {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.7rem 1rem; background: var(--surface); border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .output-item .index {
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; background: var(--surface2); font-size: 0.75rem; font-weight: 700;
+      flex-shrink: 0; color: var(--text2);
+    }
+    .output-item .info { flex: 1; min-width: 0; }
+    .output-item .info .name { font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .output-item .info .size { font-size: 0.75rem; color: var(--text2); }
+    .output-item .download-btn {
+      padding: 5px 14px; border-radius: 6px; border: none;
+      background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      transition: 0.15s; white-space: nowrap;
+    }
+    .output-item .download-btn:hover { background: var(--accent-hover); }
+    .download-all-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      margin-top: 0.75rem; padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm); border: 1px solid var(--accent);
+      background: var(--accent-dim); color: var(--accent); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: 0.15s;
+    }
+    .download-all-btn:hover { background: var(--accent); color: #fff; }
+    /* ─── Footer ─── */
+    footer {
+      padding: 1rem 1.5rem; text-align: center; font-size: 0.75rem;
+      color: var(--text2); border-top: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    /* ─── Notifications ─── */
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      padding: 0.7rem 1.5rem; border-radius: 100px;
+      background: var(--surface3); border: 1px solid var(--border);
+      font-size: 0.85rem; font-weight: 500; color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+    /* ─── Responsive ─── */
+    @media (max-width: 640px) {
+      .app { padding: 1rem; }
+      .control-grid { grid-template-columns: 1fr; }
+      .advanced-options.open { grid-template-columns: 1fr; }
+      .drop-zone { padding: 2rem 1rem; }
+      .file-info.visible { flex-wrap: wrap; }
+      .file-info .change-btn { width: 100%; }
+      header { padding: 0.7rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect x="2" y="4" width="24" height="18" rx="4" stroke="#6c5ce7" stroke-width="2" fill="rgba(108,92,231,0.1)"/>
+        <circle cx="10" cy="13" r="3" stroke="#6c5ce7" stroke-width="1.5"/>
+        <path d="M12 13l4-3v6l-4-3z" fill="#6c5ce7"/>
+      </svg>
+      ClipForge
+    </div>
+    <div class="badge">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="3"/></svg>
+      Browser-side · 100% private
+    </div>
+  </header>
+
+  <main class="app">
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone">
+      <span class="icon">&#x1F3AC;</span>
+      <h2>Drop a video file here</h2>
+      <p>or click to browse · MP4, MOV, AVI, MKV, WebM, GIF &amp; more</p>
+      <div class="format-badge">
+        <span>MP4</span><span>MOV</span><span>AVI</span><span>MKV</span><span>WebM</span><span>GIF</span>
+      </div>
+      <input type="file" id="fileInput" accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.gif,.flv,.wmv,.m4v,.3gp" />
+    </div>
+
+    <!-- File Info -->
+    <div class="file-info" id="fileInfo">
+      <span class="name" id="fileName">video.mp4</span>
+      <span class="meta" id="fileMeta">15.2 MB · 00:03:24</span>
+      <button class="change-btn" id="changeFileBtn">Change</button>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="mode-section" id="modeSection">
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="size">Split by Size</button>
+        <button class="mode-tab" data-mode="parts">Split into Parts</button>
+        <button class="mode-tab" data-mode="duration">Split by Duration</button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls" id="controls">
+      <div class="control-grid">
+        <!-- Size mode -->
+        <div class="control-group" data-for="size">
+          <label>Max size per part</label>
+          <div class="range-row">
+            <input type="range" id="sizeSlider" min="5" max="500" value="50" step="5" />
+            <span class="value" id="sizeLabel">50 MB</span>
+          </div>
+        </div>
+        <!-- Parts mode -->
+        <div class="control-group" data-for="parts">
+          <label>Number of parts</label>
+          <div class="range-row">
+            <input type="range" id="partsSlider" min="2" max="20" value="4" step="1" />
+            <span class="value" id="partsLabel">4</span>
+          </div>
+        </div>
+        <!-- Duration mode -->
+        <div class="control-group" data-for="duration">
+          <label>Duration per part</label>
+          <div class="range-row">
+            <input type="range" id="durationSlider" min="10" max="600" value="60" step="5" />
+            <span class="value" id="durationLabel">1:00</span>
+          </div>
+        </div>
+        <!-- Output Format -->
+        <div class="control-group">
+          <label>Output format</label>
+          <select id="outputFormat">
+            <option value="mp4">MP4</option>
+            <option value="webm">WebM</option>
+            <option value="avi">AVI</option>
+            <option value="mov">MOV</option>
+            <option value="gif">GIF</option>
+          </select>
+        </div>
+        <!-- Advanced Toggle -->
+        <div class="full-width">
+          <button class="advanced-toggle visible" id="advancedToggle">
+            <span class="arrow" id="advancedArrow">&#x25B6;</span> Advanced options
+          </button>
+          <div class="advanced-options" id="advancedOptions">
+            <div class="control-group">
+              <label>Video quality</label>
+              <div class="range-row">
+                <input type="range" id="qualitySlider" min="10" max="51" value="23" step="1" />
+                <span class="value" id="qualityLabel">23 (good)</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>CRF (lower = better quality, larger file)</label>
+              <div class="range-row" style="justify-content:space-between;font-size:0.7rem;color:var(--text2);margin-top:-0.2rem;">
+                <span>Best quality</span>
+                <span>Smallest file</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Resolution</label>
+              <select id="resolutionSelect">
+                <option value="">Original</option>
+                <option value="3840x2160">4K (3840×2160)</option>
+                <option value="1920x1080">1080p (1920×1080)</option>
+                <option value="1280x720">720p (1280×720)</option>
+                <option value="854x480">480p (854×480)</option>
+                <option value="640x360">360p (640×360)</option>
+                <option value="426x240">240p (426×240)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Frame rate</label>
+              <select id="fpsSelect">
+                <option value="">Original</option>
+                <option value="60">60 fps</option>
+                <option value="30">30 fps</option>
+                <option value="24">24 fps</option>
+                <option value="15">15 fps</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Split Button -->
+    <button class="split-btn" id="splitBtn">
+      <span id="splitBtnText">Split Video</span>
+    </button>
+
+    <!-- Progress -->
+    <div class="progress-section" id="progressSection">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-status">
+        <span id="progressStatus">Processing...</span>
+        <span class="eta" id="progressEta"></span>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div class="output-section" id="outputSection">
+      <div class="output-header">
+        <h3>Split Results</h3>
+        <span class="count" id="outputCount">0 parts</span>
+      </div>
+      <div class="output-grid" id="outputGrid"></div>
+      <button class="download-all-btn" id="downloadAllBtn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 011 1v6.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L7 8.586V2a1 1 0 011-1z"/><path d="M2 13a1 1 0 011 1h10a1 1 0 011-1H2z"/></svg>
+        Download All
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    Built with FFmpeg.wasm · All processing happens in your browser — nothing is uploaded
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js"></script>
+  <script>
+    // ─── State ───
+    const state = {
+      file: null,
+      fileUrl: null,
+      mode: 'size',
+      progress: { current: 0, total: 1, text: 'Ready' },
+      outputParts: [],
+      ffmpeg: null,
+      loaded: false,
+    };
+
+    // ─── DOM refs ───
+    const $ = id => document.getElementById(id);
+    const dropZone = $('dropZone');
+    const fileInput = $('fileInput');
+    const fileInfo = $('fileInfo');
+    const fileName = $('fileName');
+    const fileMeta = $('fileMeta');
+    const changeFileBtn = $('changeFileBtn');
+    const modeSection = $('modeSection');
+    const controls = $('controls');
+    const splitBtn = $('splitBtn');
+    const splitBtnText = $('splitBtnText');
+    const progressSection = $('progressSection');
+    const progressFill = $('progressFill');
+    const progressStatus = $('progressStatus');
+    const progressEta = $('progressEta');
+    const outputSection = $('outputSection');
+    const outputCount = $('outputCount');
+    const outputGrid = $('outputGrid');
+    const downloadAllBtn = $('downloadAllBtn');
+    const sizeSlider = $('sizeSlider');
+    const sizeLabel = $('sizeLabel');
+    const partsSlider = $('partsSlider');
+    const partsLabel = $('partsLabel');
+    const durationSlider = $('durationSlider');
+    const durationLabel = $('durationLabel');
+    const outputFormat = $('outputFormat');
+    const qualitySlider = $('qualitySlider');
+    const qualityLabel = $('qualityLabel');
+    const resolutionSelect = $('resolutionSelect');
+    const fpsSelect = $('fpsSelect');
+    const advancedToggle = $('advancedToggle');
+    const advancedArrow = $('advancedArrow');
+    const advancedOptions = $('advancedOptions');
+    const toast = $('toast');
+
+    // ─── Toast ───
+    let toastTimer;
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ─── Format helpers ───
+    function formatSize(bytes) {
+      if (!bytes || bytes === 0) return 'Unknown';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let i = 0; let s = bytes;
+      while (s >= 1024 && i < units.length - 1) { s /= 1024; i++; }
+      return s.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+    }
+
+    function formatDuration(secs) {
+      if (!secs || isNaN(secs)) return '00:00';
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function formatDurationFull(secs) {
+      if (!secs || isNaN(secs)) return 'Unknown';
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = Math.floor(secs % 60);
+      if (h > 0) return `${h}h ${m}m ${s}s`;
+      return `${m}m ${s}s`;
+    }
+
+    // ─── Slider bindings ───
+    sizeSlider.addEventListener('input', () => { sizeLabel.textContent = sizeSlider.value + ' MB'; hideOutput(); });
+    partsSlider.addEventListener('input', () => { partsLabel.textContent = partsSlider.value; hideOutput(); });
+    durationSlider.addEventListener('input', () => { durationLabel.textContent = formatDuration(Number(durationSlider.value)); hideOutput(); });
+    outputFormat.addEventListener('change', hideOutput);
+    qualitySlider.addEventListener('input', () => {
+      const v = Number(qualitySlider.value);
+      if (v <= 18) qualityLabel.textContent = v + ' (lossless)';
+      else if (v <= 23) qualityLabel.textContent = v + ' (good)';
+      else if (v <= 28) qualityLabel.textContent = v + ' (medium)';
+      else if (v <= 35) qualityLabel.textContent = v + ' (low)';
+      else qualityLabel.textContent = v + ' (lowest)';
+      hideOutput();
+    });
+    resolutionSelect.addEventListener('change', hideOutput);
+    fpsSelect.addEventListener('change', hideOutput);
+
+    // ─── Mode tabs ───
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+        document.querySelectorAll('[data-for]').forEach(el => {
+          el.style.display = el.dataset.for === state.mode ? 'block' : 'none';
+        });
+        hideOutput();
+      });
+    });
+
+    // ─── Advanced toggle ───
+    advancedToggle.addEventListener('click', () => {
+      const open = advancedOptions.classList.toggle('open');
+      advancedArrow.classList.toggle('open', open);
+    });
+
+    // ─── File handling ───
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('video/')) {
+        showToast('Please select a valid video file');
+        return;
+      }
+      state.file = file;
+      if (state.fileUrl) URL.revokeObjectURL(state.fileUrl);
+      state.fileUrl = URL.createObjectURL(file);
+      fileName.textContent = file.name;
+      fileInfo.classList.add('visible');
+      dropZone.style.display = 'none';
+      modeSection.classList.add('visible');
+      controls.classList.add('visible');
+      splitBtn.classList.add('visible');
+      splitBtnText.textContent = 'Split Video';
+      splitBtn.disabled = false;
+      hideOutput();
+      hideProgress();
+
+      // Try to get video duration
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        const dur = video.duration;
+        fileMeta.textContent = formatSize(file.size) + ' · ' + formatDurationFull(dur);
+        state.duration = dur;
+        video.remove();
+      };
+      video.onerror = () => {
+        fileMeta.textContent = formatSize(file.size);
+        state.duration = 0;
+        video.remove();
+      };
+      video.src = state.fileUrl;
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+    changeFileBtn.addEventListener('click', () => {
+      state.file = null; if (state.fileUrl) URL.revokeObjectURL(state.fileUrl);
+      dropZone.style.display = 'block'; fileInfo.classList.remove('visible');
+      modeSection.classList.remove('visible'); controls.classList.remove('visible');
+      splitBtn.classList.remove('visible');
+      hideOutput(); hideProgress();
+      fileInput.value = '';
+      state.loaded = false;
+    });
+
+    // ─── Progress ───
+    function showProgress(text, current, total) {
+      progressSection.classList.add('visible');
+      progressStatus.textContent = text || 'Processing...';
+      const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+      progressFill.style.width = pct + '%';
+      progressEta.textContent = pct + '%';
+    }
+
+    function hideProgress() {
+      progressSection.classList.remove('visible');
+      progressFill.style.width = '0%';
+    }
+
+    // ─── Output ───
+    function hideOutput() {
+      outputSection.classList.remove('visible');
+      state.outputParts = [];
+      outputGrid.innerHTML = '';
+    }
+
+    function showOutput(parts) {
+      state.outputParts = parts;
+      outputCount.textContent = parts.length + ' part' + (parts.length !== 1 ? 's' : '');
+      outputGrid.innerHTML = '';
+      parts.forEach((part, i) => {
+        const div = document.createElement('div');
+        div.className = 'output-item';
+        div.innerHTML = `
+          <div class="index">${i + 1}</div>
+          <div class="info">
+            <div class="name">${part.name}</div>
+            <div class="size">${formatSize(part.size)}</div>
+          </div>
+          <a href="${part.url}" download="${part.name}">
+            <button class="download-btn">Download</button>
+          </a>
+        `;
+        outputGrid.appendChild(div);
+      });
+      outputSection.classList.add('visible');
+      splitBtnText.textContent = 'Split Again';
+      splitBtn.disabled = false;
+    }
+
+    // ─── Download All ───
+    downloadAllBtn.addEventListener('click', () => {
+      state.outputParts.forEach(part => {
+        const a = document.createElement('a');
+        a.href = part.url; a.download = part.name; a.click();
+      });
+      showToast('Downloading ' + state.outputParts.length + ' files');
+    });
+
+    // ─── FFmpeg Load ───
+    async function ensureFFmpeg() {
+      if (state.loaded) return state.ffmpeg;
+      const { FFmpeg } = window;
+      if (!FFmpeg) throw new Error('FFmpeg.wasm not loaded');
+      const ffmpeg = new FFmpeg();
+      ffmpeg.on('progress', ({ progress: p, time }) => {
+        if (state.progress.total > 0) {
+          const current = Math.round(p * state.progress.total * 100) / 100;
+          showProgress(state.progress.text, current, state.progress.total);
+        }
+      });
+      showProgress('Loading FFmpeg (~20MB)...', 0, 1);
+      await ffmpeg.load();
+      state.loaded = true;
+      state.ffmpeg = ffmpeg;
+      hideProgress();
+      return ffmpeg;
+    }
+
+    // ─── Core splitting ───
+    async function doSplit() {
+      if (!state.file) return;
+      splitBtn.disabled = true;
+      splitBtnText.textContent = 'Processing...';
+      hideOutput();
+
+      try {
+        const ffmpeg = await ensureFFmpeg();
+
+        // Write input file to FFmpeg FS
+        const inputName = 'input' + getExtension(state.file.name);
+        const inputData = await state.file.arrayBuffer();
+        ffmpeg.writeFile(inputName, new Uint8Array(inputData));
+
+        // Determine output extension
+        const ext = outputFormat.value === 'gif' ? 'gif' : outputFormat.value || 'mp4';
+        const outExt = ext;
+
+        // Build base args
+        const baseArgs = ['-i', inputName, '-c:v', ext === 'gif' ? 'gif' : 'libx264', '-crf', qualitySlider.value];
+        if (resolutionSelect.value) {
+          baseArgs.push('-vf', `scale=${resolutionSelect.value}`);
+        }
+        if (fpsSelect.value) {
+          baseArgs.push('-r', fpsSelect.value);
+        }
+        if (ext !== 'gif') {
+          baseArgs.push('-preset', 'fast', '-c:a', 'aac', '-b:a', '128k');
+        }
+
+        // Get input duration
+        const probe = await getDuration(ffmpeg, inputName);
+        const totalDur = probe > 0 ? probe : state.duration || 300;
+        state.duration = totalDur;
+
+        if (totalDur <= 0) {
+          showToast('Could not determine video duration');
+          splitBtn.disabled = false; splitBtnText.textContent = 'Split Video';
+          return;
+        }
+
+        // Calculate segments
+        let segments = [];
+        const mode = state.mode;
+
+        if (mode === 'parts') {
+          const count = Number(partsSlider.value);
+          const segDur = totalDur / count;
+          for (let i = 0; i < count; i++) {
+            segments.push({ start: i * segDur, end: (i + 1) * segDur });
+          }
+        } else if (mode === 'duration') {
+          const segDur = Number(durationSlider.value);
+          for (let start = 0; start < totalDur; start += segDur) {
+            segments.push({ start, end: Math.min(start + segDur, totalDur) });
+          }
+        } else { // size mode - estimate from bitrate
+          const fileSizeMB = state.file.size / (1024 * 1024);
+          const targetMB = Number(sizeSlider.value);
+          const approxCount = Math.max(1, Math.ceil(fileSizeMB / targetMB));
+          // Use duration-based split with calculated segment duration
+          const segDur = totalDur / approxCount;
+          for (let i = 0; i < approxCount; i++) {
+            segments.push({ start: i * segDur, end: (i + 1) * segDur });
+          }
+        }
+
+        // Cap last segment
+        if (segments.length > 0) {
+          segments[segments.length - 1].end = totalDur;
+        }
+
+        if (segments.length === 0) {
+          showToast('Could not split video (duration unknown)');
+          splitBtn.disabled = false; splitBtnText.textContent = 'Split Video';
+          return;
+        }
+
+        // Process segments
+        const parts = [];
+        state.progress = { current: 0, total: segments.length, text: 'Splitting...' };
+        showProgress('Splitting...', 0, segments.length);
+
+        const baseName = state.file.name.replace(/\.[^.]+$/, '');
+
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          const dur = seg.end - seg.start;
+          const outName = `${baseName}_part${i + 1}.${outExt}`;
+
+          const args = [
+            '-ss', String(seg.start),
+            '-i', inputName,
+            '-t', String(dur),
+            '-c', 'copy',
+          ];
+
+          // For non-copy mode (when re-encoding for quality/resolution changes)
+          const needsReencode = resolutionSelect.value || fpsSelect.value || Number(qualitySlider.value) < 28;
+          if (needsReencode) {
+            args.length = 0; // reset
+            args.push('-ss', String(seg.start), '-i', inputName, '-t', String(dur));
+            args.push('-c:v', ext === 'gif' ? 'gif' : 'libx264');
+            args.push('-crf', qualitySlider.value);
+            if (resolutionSelect.value) args.push('-vf', `scale=${resolutionSelect.value}`);
+            if (fpsSelect.value) args.push('-r', fpsSelect.value);
+            args.push('-preset', 'fast');
+            if (ext !== 'gif') args.push('-c:a', 'aac', '-b:a', '128k');
+          }
+
+          args.push('-y', outName);
+
+          state.progress.current = i;
+          showProgress(`Part ${i + 1} of ${segments.length}...`, i, segments.length);
+
+          await ffmpeg.exec(args);
+
+          const data = ffmpeg.readFile(outName);
+          const blob = new Blob([data.buffer || data], { type: `video/${ext === 'gif' ? 'gif' : ext}` });
+          const url = URL.createObjectURL(blob);
+          parts.push({ name: outName, size: blob.size, url, blob });
+          ffmpeg.deleteFile(outName);
+        }
+
+        ffmpeg.deleteFile(inputName);
+
+        hideProgress();
+        showOutput(parts);
+        showToast(`Split complete — ${parts.length} parts ready`);
+      } catch (err) {
+        console.error('Split error:', err);
+        showToast('Error: ' + (err.message || 'Processing failed'));
+        hideProgress();
+      } finally {
+        splitBtn.disabled = false;
+        if (state.outputParts.length === 0) splitBtnText.textContent = 'Split Video';
+      }
+    }
+
+    // ─── Helper: get video duration via FFprobe ───
+    async function getDuration(ffmpeg, filename) {
+      try {
+        ffmpeg.writeFile('probe.txt', new Uint8Array([0]));
+        await ffmpeg.exec(['-i', filename, '-f', 'null', '-']);
+        return 0; // can't easily parse from FFmpeg log, fall back
+      } catch {
+        return 0;
+      }
+    }
+
+    function getExtension(name) {
+      const i = name.lastIndexOf('.');
+      return i >= 0 ? name.substring(i) : '.mp4';
+    }
+
+    // ─── Split button ───
+    splitBtn.addEventListener('click', doSplit);
+
+    // ─── Init ───
+    console.log('ClipForge ready');
+    showToast('Drop a video to get started');
+  </script>
+</body>
+</html>

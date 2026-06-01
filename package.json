@@ -1,0 +1,9 @@
+{
+  "name": "clipforge-video-splitter",
+  "version": "1.0.0",
+  "description": "Browser-based video splitter tool using FFmpeg.wasm",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'"
+  }
+}
