@@ -810,21 +810,43 @@
       ffmpegError.style.display = 'none';
       ffmpegRetry.style.display = 'none';
       ffmpegLoading.classList.add('visible');
-      ffmpegStatus.textContent = 'Step 1/2: Loading FFmpeg library...';
 
       try {
-        const mod = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm');
-
-        const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
-        ffmpegStatus.textContent = 'Step 2/2: Downloading video engine... (~21MB)';
-        ffmpegStatus.textContent += '  (cached after first load)';
-
-        const coreURL = await mod.toBlobURL(base + '/ffmpeg-core.js', 'text/javascript');
-        const wasmURL = await mod.toBlobURL(base + '/ffmpeg-core.wasm', 'application/wasm');
-
-        const { FFmpeg } = mod;
+        // Load the FFmpeg class via CDN
+        ffmpegStatus.textContent = 'Loading FFmpeg...';
+        const { FFmpeg } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm');
         const ffmpeg = new FFmpeg();
-        await ffmpeg.load({ coreURL, wasmURL });
+
+        // Download core files via raw fetch and create blob URLs (avoids toBlobURL API differences)
+        const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+        ffmpegStatus.textContent = 'Downloading video engine... (~21MB, cached after first load)';
+
+        const [coreRes, wasmRes] = await Promise.all([
+          fetch(base + '/ffmpeg-core.js'),
+          fetch(base + '/ffmpeg-core.wasm'),
+        ]);
+
+        if (!coreRes.ok || !wasmRes.ok) {
+          // Try alternate path for core files
+          const [coreRes2, wasmRes2] = await Promise.all([
+            fetch('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js'),
+            fetch('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm'),
+          ]);
+          if (!coreRes2.ok || !wasmRes2.ok) {
+            throw new Error('Failed to download FFmpeg core files (status: ' + coreRes2.status + '/' + wasmRes2.status + ')');
+          }
+          const coreBlob = await coreRes2.blob();
+          const wasmBlob = await wasmRes2.blob();
+          const coreURL = URL.createObjectURL(coreBlob);
+          const wasmURL = URL.createObjectURL(wasmBlob);
+          await ffmpeg.load({ coreURL, wasmURL });
+        } else {
+          const coreBlob = await coreRes.blob();
+          const wasmBlob = await wasmRes.blob();
+          const coreURL = URL.createObjectURL(coreBlob);
+          const wasmURL = URL.createObjectURL(wasmBlob);
+          await ffmpeg.load({ coreURL, wasmURL });
+        }
 
         state.loaded = true;
         state.ffmpeg = ffmpeg;
