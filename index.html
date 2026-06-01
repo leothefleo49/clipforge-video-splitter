@@ -277,6 +277,13 @@
     .ffmpeg-loading p { color: var(--text2); font-size: 0.85rem; }
     .ffmpeg-loading .sub { color: var(--text3); font-size: 0.75rem; margin-top: 0.3rem; }
     .ffmpeg-loading .hint { color: var(--accent); font-size: 0.7rem; margin-top: 0.6rem; opacity: 0.7; }
+    .ffmpeg-loading .retry-btn {
+      margin-top: 0.8rem; padding: 0.4rem 1rem; border-radius: 6px;
+      border: 1px solid var(--accent); background: transparent; color: var(--accent);
+      font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: 0.15s;
+    }
+    .ffmpeg-loading .retry-btn:hover { background: var(--accent-dim); }
+    .ffmpeg-loading .error-text { color: var(--red); font-size: 0.8rem; margin-top: 0.5rem; }
 
     footer {
       padding: 1rem 1.5rem; text-align: center; font-size: 0.75rem;
@@ -459,8 +466,10 @@
     <div class="ffmpeg-loading" id="ffmpegLoading">
       <div class="spinner"></div>
       <p id="ffmpegStatus">Loading FFmpeg engine...</p>
-      <p class="sub">First load downloads ~20MB — stays cached after that</p>
-      <p class="hint" id="ffmpegHint">Tip: Check browser downloads or network tab for progress</p>
+      <p class="sub">Downloads ~21MB of WebAssembly code — cached after first load</p>
+      <p class="hint" id="ffmpegHint">Please wait, this may take 10-30 seconds on first visit</p>
+      <p class="error-text" id="ffmpegError" style="display:none"></p>
+      <button class="retry-btn" id="ffmpegRetry" style="display:none">Retry Loading</button>
     </div>
 
     <!-- Progress -->
@@ -495,14 +504,8 @@
   <div class="toast" id="toast"></div>
 
   <script type="module">
-    // ─── FFmpeg.wasm dynamic import ───
-    let FFmpegWasm;
-
-    async function loadFFmpeg() {
-      const mod = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm');
-      FFmpegWasm = mod;
-      return { FFmpeg: mod.FFmpeg, toBlobURL: mod.toBlobURL };
-    }
+    // ─── FFmpeg.wasm setup ───
+    let FFmpegCtor = null;
 
     // ─── State ───
     const state = {
@@ -535,6 +538,8 @@
     const splitBtnText = $('splitBtnText');
     const ffmpegLoading = $('ffmpegLoading');
     const ffmpegStatus = $('ffmpegStatus');
+    const ffmpegError = $('ffmpegError');
+    const ffmpegRetry = $('ffmpegRetry');
     const progressSection = $('progressSection');
     const progressFill = $('progressFill');
     const progressStatus = $('progressStatus');
@@ -799,66 +804,74 @@
     });
 
     // ─── FFmpeg Load ───
-    async function ensureFFmpeg() {
-      if (state.loaded) return state.ffmpeg;
+    async function loadFFmpegEngine() {
+      if (state.loaded && state.ffmpeg) return state.ffmpeg;
 
+      ffmpegError.style.display = 'none';
+      ffmpegRetry.style.display = 'none';
       ffmpegLoading.classList.add('visible');
-      splitBtn.disabled = true;
+      ffmpegStatus.textContent = 'Step 1/2: Loading FFmpeg library...';
 
       try {
-        ffmpegStatus.textContent = 'Downloading FFmpeg engine... (~20MB, ~10-20s first time, then cached)';
-        const { FFmpeg } = FFmpegWasm;
+        const mod = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm');
+
+        const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+        ffmpegStatus.textContent = 'Step 2/2: Downloading video engine... (~21MB)';
+        ffmpegStatus.textContent += '  (cached after first load)';
+
+        const coreURL = await mod.toBlobURL(base + '/ffmpeg-core.js', 'text/javascript');
+        const wasmURL = await mod.toBlobURL(base + '/ffmpeg-core.wasm', 'application/wasm');
+
+        const { FFmpeg } = mod;
         const ffmpeg = new FFmpeg();
-
-        ffmpeg.on('log', ({ message }) => {
-          // console.log('ffmpeg:', message);
-        });
-
-        ffmpeg.on('progress', ({ progress: p }) => {
-          if (state.progress.total > 0) {
-            const pct = Math.round(p * 100);
-            showProgress(state.progress.text, pct);
-          }
-        });
-
-        // Use jsDelivr for the core files too
-        const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
-        await ffmpeg.load({
-          coreURL: baseURL + '/ffmpeg-core.js',
-          wasmURL: baseURL + '/ffmpeg-core.wasm',
-        });
+        await ffmpeg.load({ coreURL, wasmURL });
 
         state.loaded = true;
         state.ffmpeg = ffmpeg;
         ffmpegLoading.classList.remove('visible');
-        splitBtn.disabled = false;
+        console.log('FFmpeg loaded successfully');
         return ffmpeg;
       } catch (err) {
         ffmpegLoading.classList.remove('visible');
-        splitBtn.disabled = false;
         throw err;
       }
     }
 
-    // Pre-load FFmpeg immediately so it's ready when the user needs it
-    loadFFmpeg().then(lib => {
-      FFmpegWasm = lib;
-      // Start loading core in background
-      ensureFFmpeg().catch(err => {
-        console.error('Pre-load ffmpeg failed:', err);
-        showToast('FFmpeg failed to load. Refresh and try again.');
+    // Start loading engine immediately in background
+    let ffmpegLoadPromise = loadFFmpegEngine().catch(err => {
+      console.error('FFmpeg pre-load failed:', err);
+      ffmpegLoading.classList.add('visible');
+      ffmpegStatus.textContent = 'FFmpeg engine failed to load';
+      ffmpegError.style.display = 'block';
+      ffmpegError.textContent = err.message || 'Unknown error';
+      ffmpegRetry.style.display = 'inline-block';
+    });
+
+    ffmpegRetry.addEventListener('click', () => {
+      ffmpegLoadPromise = loadFFmpegEngine().catch(err => {
+        console.error('FFmpeg retry failed:', err);
+        ffmpegLoading.classList.add('visible');
+        ffmpegStatus.textContent = 'FFmpeg engine failed to load';
+        ffmpegError.style.display = 'block';
+        ffmpegError.textContent = err.message || 'Unknown error';
+        ffmpegRetry.style.display = 'inline-block';
       });
-    }).catch(err => {
-      console.error('Failed to load FFmpeg.wasm lib:', err);
-      showToast('Failed to load FFmpeg engine. Check your internet connection.');
     });
 
     // ─── Core splitting ───
     async function doSplit() {
       if (!state.file) return;
+
+      // Ensure engine is loaded (awaits the pre-load if still in progress)
       if (!state.loaded || !state.ffmpeg) {
-        showToast('FFmpeg engine is still loading. Please wait...');
-        return;
+        showToast('Starting FFmpeg engine...');
+        try {
+          await ffmpegLoadPromise;
+          if (!state.loaded || !state.ffmpeg) throw new Error('Engine not available');
+        } catch (err) {
+          showToast('FFmpeg engine is still loading. Please wait a moment...');
+          return;
+        }
       }
 
       splitBtn.disabled = true;
