@@ -276,6 +276,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .ffmpeg-loading p { color: var(--text2); font-size: 0.85rem; }
     .ffmpeg-loading .sub { color: var(--text3); font-size: 0.75rem; margin-top: 0.3rem; }
+    .ffmpeg-loading .hint { color: var(--accent); font-size: 0.7rem; margin-top: 0.6rem; opacity: 0.7; }
 
     footer {
       padding: 1rem 1.5rem; text-align: center; font-size: 0.75rem;
@@ -458,7 +459,8 @@
     <div class="ffmpeg-loading" id="ffmpegLoading">
       <div class="spinner"></div>
       <p id="ffmpegStatus">Loading FFmpeg engine...</p>
-      <p class="sub">First load downloads ~20MB of WebAssembly code</p>
+      <p class="sub">First load downloads ~20MB — stays cached after that</p>
+      <p class="hint" id="ffmpegHint">Tip: Check browser downloads or network tab for progress</p>
     </div>
 
     <!-- Progress -->
@@ -497,10 +499,8 @@
     let FFmpegWasm;
 
     async function loadFFmpeg() {
-      const mod = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js');
+      const mod = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm');
       FFmpegWasm = mod;
-      // Also load core
-      const core = await import('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js');
       return { FFmpeg: mod.FFmpeg, toBlobURL: mod.toBlobURL };
     }
 
@@ -806,25 +806,23 @@
       splitBtn.disabled = true;
 
       try {
-        ffmpegStatus.textContent = 'Loading FFmpeg engine (~20MB)...';
+        ffmpegStatus.textContent = 'Downloading FFmpeg engine... (~20MB, ~10-20s first time, then cached)';
         const { FFmpeg } = FFmpegWasm;
         const ffmpeg = new FFmpeg();
 
         ffmpeg.on('log', ({ message }) => {
-          // can uncomment for debugging
           // console.log('ffmpeg:', message);
         });
 
         ffmpeg.on('progress', ({ progress: p }) => {
-          // progress 0..1 for current operation
           if (state.progress.total > 0) {
             const pct = Math.round(p * 100);
             showProgress(state.progress.text, pct);
           }
         });
 
-        // Load core
-        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+        // Use jsDelivr for the core files too
+        const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
         await ffmpeg.load({
           coreURL: baseURL + '/ffmpeg-core.js',
           wasmURL: baseURL + '/ffmpeg-core.wasm',
