@@ -17,12 +17,11 @@
       --border: #2a2f38;
       --text: #e8eaed;
       --text2: #9aa0a8;
+      --text3: #5a6070;
       --accent: #6c5ce7;
       --accent-hover: #7f71f0;
       --accent-dim: rgba(108, 92, 231, 0.15);
       --green: #00c853;
-      --orange: #ff9100;
-      --red: #ff1744;
       --radius: 12px;
       --radius-sm: 8px;
     }
@@ -36,7 +35,6 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
     }
-    /* ─── Header ─── */
     header {
       padding: 1rem 1.5rem;
       display: flex;
@@ -54,7 +52,6 @@
       font-size: 1.2rem;
     }
     .logo svg { width: 28px; height: 28px; }
-    .logo span { color: var(--text2); }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -69,9 +66,9 @@
       color: var(--accent);
       border: 1px solid rgba(108,92,231,0.25);
     }
-    /* ─── Main Layout ─── */
     .app { flex: 1; display: flex; flex-direction: column; max-width: 960px; width: 100%; margin: 0 auto; padding: 1.5rem; }
-    /* ─── Drop Zone ─── */
+
+    /* Drop Zone */
     .drop-zone {
       border: 2px dashed var(--border);
       border-radius: var(--radius);
@@ -80,21 +77,16 @@
       cursor: pointer;
       transition: all 0.2s;
       background: var(--surface);
-      position: relative;
     }
     .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--accent-dim); }
     .drop-zone .icon { font-size: 2.4rem; margin-bottom: 0.5rem; display: block; opacity: 0.5; }
     .drop-zone h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
     .drop-zone p { color: var(--text2); font-size: 0.85rem; }
     .drop-zone input[type="file"] { display: none; }
-    .drop-zone .format-badge {
-      display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 0.8rem;
-    }
-    .drop-zone .format-badge span {
-      font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;
-      background: var(--surface2); color: var(--text2);
-    }
-    /* ─── File Info ─── */
+    .drop-zone .fmt { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 0.8rem; }
+    .drop-zone .fmt span { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: var(--surface2); color: var(--text2); }
+
+    /* File Info */
     .file-info {
       display: none;
       background: var(--surface);
@@ -114,10 +106,29 @@
       cursor: pointer; transition: 0.15s;
     }
     .file-info .change-btn:hover { background: var(--surface2); color: var(--text); }
-    /* ─── Mode Selection ─── */
+
+    /* Video Preview */
+    .preview-section {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .preview-section.visible { display: block; }
+    .preview-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;
+    }
+    .preview-header label { font-size: 0.8rem; font-weight: 500; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
+    .preview-header input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+    .preview-video {
+      display: none;
+      width: 100%; border-radius: var(--radius-sm);
+      background: #000; max-height: 280px; object-fit: contain;
+    }
+    .preview-video.visible { display: block; }
+
+    /* Mode Tabs */
     .mode-section {
       display: none;
-      margin-top: 1.2rem;
+      margin-top: 1rem;
     }
     .mode-section.visible { display: block; }
     .mode-tabs {
@@ -130,21 +141,18 @@
     }
     .mode-tab.active { background: var(--accent); color: #fff; }
     .mode-tab:not(.active):hover { background: var(--surface2); color: var(--text); }
-    /* ─── Controls ─── */
+
+    /* Controls */
     .controls {
       display: none;
-      margin-top: 1rem;
+      margin-top: 0.75rem;
       background: var(--surface);
       border-radius: var(--radius);
       padding: 1.2rem;
       border: 1px solid var(--border);
     }
     .controls.visible { display: block; }
-    .control-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
     .control-group label { font-size: 0.78rem; font-weight: 500; color: var(--text2); }
     .control-group input, .control-group select {
@@ -160,11 +168,12 @@
     .range-row { display: flex; align-items: center; gap: 0.5rem; }
     .range-row input[type="range"] { flex: 1; }
     .range-row .value { min-width: 2.8rem; text-align: right; font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+    .range-row .sub { min-width: 5rem; text-align: right; font-size: 0.75rem; color: var(--text3); }
     .full-width { grid-column: 1 / -1; }
-    /* ─── Advanced Toggle ─── */
+
     .advanced-toggle {
       display: none;
-      margin-top: 0.75rem; padding: 0.5rem 0; font-size: 0.8rem; font-weight: 500;
+      margin-top: 0.5rem; padding: 0.5rem 0; font-size: 0.8rem; font-weight: 500;
       color: var(--text2); cursor: pointer; user-select: none; border: none; background: none;
       transition: 0.15s; align-items: center; gap: 0.4rem;
     }
@@ -172,16 +181,18 @@
     .advanced-toggle:hover { color: var(--accent); }
     .advanced-toggle .arrow { transition: transform 0.2s; display: inline-block; }
     .advanced-toggle .arrow.open { transform: rotate(90deg); }
-    .advanced-options {
-      display: none;
-      margin-top: 0.75rem;
-      grid-column: 1 / -1;
-    }
+    .advanced-options { display: none; margin-top: 0.75rem; grid-column: 1 / -1; }
     .advanced-options.open { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    /* ─── Split Button ─── */
+
+    .info-row {
+      font-size: 0.78rem; color: var(--text3); padding: 0.4rem 0 0.4rem 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Split Button */
     .split-btn {
       display: none;
-      width: 100%; margin-top: 1.2rem; padding: 0.85rem;
+      width: 100%; margin-top: 1rem; padding: 0.85rem;
       font-size: 1rem; font-weight: 700; font-family: inherit;
       border: none; border-radius: var(--radius-sm);
       background: var(--accent); color: #fff; cursor: pointer;
@@ -190,7 +201,8 @@
     .split-btn.visible { display: block; }
     .split-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
     .split-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    /* ─── Progress ─── */
+
+    /* Progress */
     .progress-section {
       display: none;
       margin-top: 1rem;
@@ -210,7 +222,8 @@
     }
     .progress-status { font-size: 0.82rem; color: var(--text2); display: flex; justify-content: space-between; }
     .progress-status .eta { color: var(--text2); }
-    /* ─── Output ─── */
+
+    /* Output */
     .output-section {
       display: none;
       margin-top: 1rem;
@@ -221,28 +234,26 @@
     }
     .output-header h3 { font-size: 0.95rem; font-weight: 600; }
     .output-header .count { color: var(--text2); font-size: 0.8rem; }
-    .output-grid {
-      display: grid; gap: 0.5rem;
-    }
+    .output-grid { display: grid; gap: 0.5rem; }
     .output-item {
       display: flex; align-items: center; gap: 0.8rem;
       padding: 0.7rem 1rem; background: var(--surface); border-radius: var(--radius-sm);
       border: 1px solid var(--border);
     }
-    .output-item .index {
+    .output-item .idx {
       width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
       border-radius: 6px; background: var(--surface2); font-size: 0.75rem; font-weight: 700;
       flex-shrink: 0; color: var(--text2);
     }
     .output-item .info { flex: 1; min-width: 0; }
-    .output-item .info .name { font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .output-item .info .size { font-size: 0.75rem; color: var(--text2); }
-    .output-item .download-btn {
+    .output-item .info .oname { font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .output-item .info .osize { font-size: 0.75rem; color: var(--text2); }
+    .output-item .dl-btn {
       padding: 5px 14px; border-radius: 6px; border: none;
       background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 600; cursor: pointer;
       transition: 0.15s; white-space: nowrap;
     }
-    .output-item .download-btn:hover { background: var(--accent-hover); }
+    .output-item .dl-btn:hover { background: var(--accent-hover); }
     .download-all-btn {
       display: inline-flex; align-items: center; gap: 0.4rem;
       margin-top: 0.75rem; padding: 0.6rem 1.2rem;
@@ -251,14 +262,27 @@
       cursor: pointer; transition: 0.15s;
     }
     .download-all-btn:hover { background: var(--accent); color: #fff; }
-    /* ─── Footer ─── */
+
+    /* FFmpeg loading state */
+    .ffmpeg-loading {
+      display: none;
+      text-align: center; padding: 2rem;
+    }
+    .ffmpeg-loading.visible { display: block; }
+    .ffmpeg-loading .spinner {
+      width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 0.8rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ffmpeg-loading p { color: var(--text2); font-size: 0.85rem; }
+    .ffmpeg-loading .sub { color: var(--text3); font-size: 0.75rem; margin-top: 0.3rem; }
+
     footer {
       padding: 1rem 1.5rem; text-align: center; font-size: 0.75rem;
       color: var(--text2); border-top: 1px solid var(--border);
       background: var(--surface); flex-shrink: 0;
     }
-    footer a { color: var(--accent); text-decoration: none; }
-    /* ─── Notifications ─── */
+
     .toast {
       position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
       padding: 0.7rem 1.5rem; border-radius: 100px;
@@ -268,7 +292,7 @@
       opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
     }
     .toast.show { opacity: 1; }
-    /* ─── Responsive ─── */
+
     @media (max-width: 640px) {
       .app { padding: 1rem; }
       .control-grid { grid-template-columns: 1fr; }
@@ -299,10 +323,10 @@
   <main class="app">
     <!-- Drop Zone -->
     <div class="drop-zone" id="dropZone">
-      <span class="icon">&#x1F3AC;</span>
+      <span class="icon"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#5a6070" stroke-width="2"><rect x="6" y="8" width="36" height="28" rx="6"/><circle cx="16" cy="20" r="5"/><path d="M18 20l8-6v12l-8-6z"/></svg></span>
       <h2>Drop a video file here</h2>
-      <p>or click to browse · MP4, MOV, AVI, MKV, WebM, GIF &amp; more</p>
-      <div class="format-badge">
+      <p>or click to browse &middot; MP4, MOV, AVI, MKV, WebM, GIF &amp; more</p>
+      <div class="fmt">
         <span>MP4</span><span>MOV</span><span>AVI</span><span>MKV</span><span>WebM</span><span>GIF</span>
       </div>
       <input type="file" id="fileInput" accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.gif,.flv,.wmv,.m4v,.3gp" />
@@ -311,8 +335,19 @@
     <!-- File Info -->
     <div class="file-info" id="fileInfo">
       <span class="name" id="fileName">video.mp4</span>
-      <span class="meta" id="fileMeta">15.2 MB · 00:03:24</span>
+      <span class="meta" id="fileMeta">15.2 MB &middot; 00:03:24</span>
       <button class="change-btn" id="changeFileBtn">Change</button>
+    </div>
+
+    <!-- Video Preview -->
+    <div class="preview-section" id="previewSection">
+      <div class="preview-header">
+        <label>
+          <input type="checkbox" id="previewToggle" />
+          Show preview
+        </label>
+      </div>
+      <video class="preview-video" id="previewVideo" controls></video>
     </div>
 
     <!-- Mode Tabs -->
@@ -328,27 +363,36 @@
     <div class="controls" id="controls">
       <div class="control-grid">
         <!-- Size mode -->
-        <div class="control-group" data-for="size">
+        <div class="control-group" data-for="size" id="sizeGroup">
           <label>Max size per part</label>
           <div class="range-row">
             <input type="range" id="sizeSlider" min="5" max="500" value="50" step="5" />
             <span class="value" id="sizeLabel">50 MB</span>
           </div>
+          <div class="info-row">
+            <span id="sizeEstimate">Estimating parts...</span>
+          </div>
         </div>
         <!-- Parts mode -->
-        <div class="control-group" data-for="parts">
+        <div class="control-group" data-for="parts" id="partsGroup" style="display:none">
           <label>Number of parts</label>
           <div class="range-row">
             <input type="range" id="partsSlider" min="2" max="20" value="4" step="1" />
             <span class="value" id="partsLabel">4</span>
           </div>
+          <div class="info-row">
+            <span id="partsEstimate">~25 MB per part (estimated)</span>
+          </div>
         </div>
         <!-- Duration mode -->
-        <div class="control-group" data-for="duration">
+        <div class="control-group" data-for="duration" id="durationGroup" style="display:none">
           <label>Duration per part</label>
           <div class="range-row">
             <input type="range" id="durationSlider" min="10" max="600" value="60" step="5" />
             <span class="value" id="durationLabel">1:00</span>
+          </div>
+          <div class="info-row">
+            <span id="durationEstimate">Estimating parts...</span>
           </div>
         </div>
         <!-- Output Format -->
@@ -365,33 +409,29 @@
         <!-- Advanced Toggle -->
         <div class="full-width">
           <button class="advanced-toggle visible" id="advancedToggle">
-            <span class="arrow" id="advancedArrow">&#x25B6;</span> Advanced options
+            <span class="arrow" id="advancedArrow">&#x25B6;</span> Quality &amp; compression
           </button>
           <div class="advanced-options" id="advancedOptions">
             <div class="control-group">
-              <label>Video quality</label>
+              <label>Video quality (CRF)</label>
               <div class="range-row">
-                <input type="range" id="qualitySlider" min="10" max="51" value="23" step="1" />
+                <input type="range" id="qualitySlider" min="18" max="51" value="23" step="1" />
                 <span class="value" id="qualityLabel">23 (good)</span>
               </div>
-            </div>
-            <div class="control-group">
-              <label>CRF (lower = better quality, larger file)</label>
-              <div class="range-row" style="justify-content:space-between;font-size:0.7rem;color:var(--text2);margin-top:-0.2rem;">
-                <span>Best quality</span>
-                <span>Smallest file</span>
+              <div class="info-row">
+                <span>Lower = better quality, larger file</span>
               </div>
             </div>
             <div class="control-group">
               <label>Resolution</label>
               <select id="resolutionSelect">
                 <option value="">Original</option>
-                <option value="3840x2160">4K (3840×2160)</option>
-                <option value="1920x1080">1080p (1920×1080)</option>
-                <option value="1280x720">720p (1280×720)</option>
-                <option value="854x480">480p (854×480)</option>
-                <option value="640x360">360p (640×360)</option>
-                <option value="426x240">240p (426×240)</option>
+                <option value="3840x2160">4K (3840x2160)</option>
+                <option value="1920x1080">1080p (1920x1080)</option>
+                <option value="1280x720">720p (1280x720)</option>
+                <option value="854x480">480p (854x480)</option>
+                <option value="640x360">360p (640x360)</option>
+                <option value="426x240">240p (426x240)</option>
               </select>
             </div>
             <div class="control-group">
@@ -413,6 +453,13 @@
     <button class="split-btn" id="splitBtn">
       <span id="splitBtnText">Split Video</span>
     </button>
+
+    <!-- Loading overlay -->
+    <div class="ffmpeg-loading" id="ffmpegLoading">
+      <div class="spinner"></div>
+      <p id="ffmpegStatus">Loading FFmpeg engine...</p>
+      <p class="sub">First load downloads ~20MB of WebAssembly code</p>
+    </div>
 
     <!-- Progress -->
     <div class="progress-section" id="progressSection">
@@ -440,25 +487,38 @@
   </main>
 
   <footer>
-    Built with FFmpeg.wasm · All processing happens in your browser — nothing is uploaded
+    Powered by FFmpeg.wasm &middot; No uploads &mdash; everything runs in your browser
   </footer>
 
   <div class="toast" id="toast"></div>
 
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js"></script>
-  <script>
+  <script type="module">
+    // ─── FFmpeg.wasm dynamic import ───
+    let FFmpegWasm;
+
+    async function loadFFmpeg() {
+      const mod = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js');
+      FFmpegWasm = mod;
+      // Also load core
+      const core = await import('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js');
+      return { FFmpeg: mod.FFmpeg, toBlobURL: mod.toBlobURL };
+    }
+
     // ─── State ───
     const state = {
       file: null,
       fileUrl: null,
+      duration: 0,
       mode: 'size',
-      progress: { current: 0, total: 1, text: 'Ready' },
+      progress: { current: 0, total: 1, text: '' },
       outputParts: [],
       ffmpeg: null,
       loaded: false,
+      ffmpegLib: null,
+      toBlobURL: null,
     };
 
-    // ─── DOM refs ───
+    // ─── DOM ───
     const $ = id => document.getElementById(id);
     const dropZone = $('dropZone');
     const fileInput = $('fileInput');
@@ -466,10 +526,15 @@
     const fileName = $('fileName');
     const fileMeta = $('fileMeta');
     const changeFileBtn = $('changeFileBtn');
+    const previewSection = $('previewSection');
+    const previewToggle = $('previewToggle');
+    const previewVideo = $('previewVideo');
     const modeSection = $('modeSection');
     const controls = $('controls');
     const splitBtn = $('splitBtn');
     const splitBtnText = $('splitBtnText');
+    const ffmpegLoading = $('ffmpegLoading');
+    const ffmpegStatus = $('ffmpegStatus');
     const progressSection = $('progressSection');
     const progressFill = $('progressFill');
     const progressStatus = $('progressStatus');
@@ -478,12 +543,16 @@
     const outputCount = $('outputCount');
     const outputGrid = $('outputGrid');
     const downloadAllBtn = $('downloadAllBtn');
+
     const sizeSlider = $('sizeSlider');
     const sizeLabel = $('sizeLabel');
+    const sizeEstimate = $('sizeEstimate');
     const partsSlider = $('partsSlider');
     const partsLabel = $('partsLabel');
+    const partsEstimate = $('partsEstimate');
     const durationSlider = $('durationSlider');
     const durationLabel = $('durationLabel');
+    const durationEstimate = $('durationEstimate');
     const outputFormat = $('outputFormat');
     const qualitySlider = $('qualitySlider');
     const qualityLabel = $('qualityLabel');
@@ -500,7 +569,7 @@
       toast.textContent = msg;
       toast.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
     }
 
     // ─── Format helpers ───
@@ -512,30 +581,61 @@
       return s.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
     }
 
-    function formatDuration(secs) {
-      if (!secs || isNaN(secs)) return '00:00';
-      const m = Math.floor(secs / 60);
-      const s = Math.floor(secs % 60);
+    function formatDuration(t) {
+      if (!t || isNaN(t)) return '00:00';
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60);
       return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     }
 
-    function formatDurationFull(secs) {
-      if (!secs || isNaN(secs)) return 'Unknown';
-      const h = Math.floor(secs / 3600);
-      const m = Math.floor((secs % 3600) / 60);
-      const s = Math.floor(secs % 60);
+    function formatDurationLong(t) {
+      if (!t || isNaN(t)) return 'Unknown';
+      const h = Math.floor(t / 3600);
+      const m = Math.floor((t % 3600) / 60);
+      const s = Math.floor(t % 60);
       if (h > 0) return `${h}h ${m}m ${s}s`;
       return `${m}m ${s}s`;
     }
 
+    // ─── Estimates ───
+    function updateEstimates() {
+      if (!state.file || !state.duration) return;
+
+      const sizeMB = state.file.size / (1024 * 1024);
+      const mode = state.mode;
+
+      if (mode === 'size') {
+        const targetMB = Number(sizeSlider.value);
+        const count = Math.max(1, Math.ceil(sizeMB / targetMB));
+        sizeEstimate.textContent = `~${count} part${count > 1 ? 's' : ''} (${formatSize(state.file.size)} total)`;
+      } else if (mode === 'parts') {
+        const count = Number(partsSlider.value);
+        const perPart = sizeMB / count;
+        partsEstimate.textContent = `~${perPart.toFixed(1)} MB per part (${count} parts total)`;
+      } else if (mode === 'duration') {
+        const segDur = Number(durationSlider.value);
+        const count = Math.max(1, Math.ceil(state.duration / segDur));
+        durationEstimate.textContent = `~${count} part${count > 1 ? 's' : ''} (${formatDurationLong(state.duration)} total)`;
+      }
+    }
+
     // ─── Slider bindings ───
-    sizeSlider.addEventListener('input', () => { sizeLabel.textContent = sizeSlider.value + ' MB'; hideOutput(); });
-    partsSlider.addEventListener('input', () => { partsLabel.textContent = partsSlider.value; hideOutput(); });
-    durationSlider.addEventListener('input', () => { durationLabel.textContent = formatDuration(Number(durationSlider.value)); hideOutput(); });
+    sizeSlider.addEventListener('input', () => {
+      sizeLabel.textContent = sizeSlider.value + ' MB';
+      updateEstimates(); hideOutput();
+    });
+    partsSlider.addEventListener('input', () => {
+      partsLabel.textContent = partsSlider.value;
+      updateEstimates(); hideOutput();
+    });
+    durationSlider.addEventListener('input', () => {
+      durationLabel.textContent = formatDuration(Number(durationSlider.value));
+      updateEstimates(); hideOutput();
+    });
     outputFormat.addEventListener('change', hideOutput);
     qualitySlider.addEventListener('input', () => {
       const v = Number(qualitySlider.value);
-      if (v <= 18) qualityLabel.textContent = v + ' (lossless)';
+      if (v <= 18) qualityLabel.textContent = v + ' (high)';
       else if (v <= 23) qualityLabel.textContent = v + ' (good)';
       else if (v <= 28) qualityLabel.textContent = v + ' (medium)';
       else if (v <= 35) qualityLabel.textContent = v + ' (low)';
@@ -545,15 +645,26 @@
     resolutionSelect.addEventListener('change', hideOutput);
     fpsSelect.addEventListener('change', hideOutput);
 
+    // ─── Preview toggle ───
+    previewToggle.addEventListener('change', () => {
+      previewVideo.classList.toggle('visible', previewToggle.checked);
+      if (previewToggle.checked && state.fileUrl) {
+        previewVideo.src = state.fileUrl;
+      }
+    });
+
     // ─── Mode tabs ───
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         state.mode = tab.dataset.mode;
-        document.querySelectorAll('[data-for]').forEach(el => {
-          el.style.display = el.dataset.for === state.mode ? 'block' : 'none';
+        // Show/hide groups
+        ['size', 'parts', 'duration'].forEach(m => {
+          const el = $(m + 'Group');
+          if (el) el.style.display = m === state.mode ? 'block' : 'none';
         });
+        updateEstimates();
         hideOutput();
       });
     });
@@ -574,23 +685,29 @@
       if (state.fileUrl) URL.revokeObjectURL(state.fileUrl);
       state.fileUrl = URL.createObjectURL(file);
       fileName.textContent = file.name;
+
+      previewVideo.src = state.fileUrl;
+      previewVideo.classList.remove('visible');
+      previewToggle.checked = false;
+
       fileInfo.classList.add('visible');
       dropZone.style.display = 'none';
+      previewSection.classList.add('visible');
       modeSection.classList.add('visible');
       controls.classList.add('visible');
       splitBtn.classList.add('visible');
       splitBtnText.textContent = 'Split Video';
       splitBtn.disabled = false;
-      hideOutput();
-      hideProgress();
+      hideOutput(); hideProgress();
 
-      // Try to get video duration
+      // Get metadata
       const video = document.createElement('video');
       video.preload = 'metadata';
       video.onloadedmetadata = () => {
         const dur = video.duration;
-        fileMeta.textContent = formatSize(file.size) + ' · ' + formatDurationFull(dur);
+        fileMeta.textContent = formatSize(file.size) + ' · ' + formatDurationLong(dur);
         state.duration = dur;
+        updateEstimates();
         video.remove();
       };
       video.onerror = () => {
@@ -613,23 +730,26 @@
     });
     changeFileBtn.addEventListener('click', () => {
       state.file = null; if (state.fileUrl) URL.revokeObjectURL(state.fileUrl);
+      state.duration = 0;
+      previewVideo.src = '';
+      previewVideo.classList.remove('visible');
+      previewSection.classList.remove('visible');
+      previewToggle.checked = false;
       dropZone.style.display = 'block'; fileInfo.classList.remove('visible');
       modeSection.classList.remove('visible'); controls.classList.remove('visible');
       splitBtn.classList.remove('visible');
       hideOutput(); hideProgress();
       fileInput.value = '';
-      state.loaded = false;
     });
 
     // ─── Progress ───
-    function showProgress(text, current, total) {
+    function showProgress(text, pct) {
       progressSection.classList.add('visible');
       progressStatus.textContent = text || 'Processing...';
-      const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
-      progressFill.style.width = pct + '%';
-      progressEta.textContent = pct + '%';
+      const p = Math.min(100, Math.max(0, pct));
+      progressFill.style.width = p + '%';
+      progressEta.textContent = p + '%';
     }
-
     function hideProgress() {
       progressSection.classList.remove('visible');
       progressFill.style.width = '0%';
@@ -645,25 +765,29 @@
     function showOutput(parts) {
       state.outputParts = parts;
       outputCount.textContent = parts.length + ' part' + (parts.length !== 1 ? 's' : '');
+      const totalSize = parts.reduce((s, p) => s + p.size, 0);
       outputGrid.innerHTML = '';
       parts.forEach((part, i) => {
         const div = document.createElement('div');
         div.className = 'output-item';
         div.innerHTML = `
-          <div class="index">${i + 1}</div>
+          <div class="idx">${i + 1}</div>
           <div class="info">
-            <div class="name">${part.name}</div>
-            <div class="size">${formatSize(part.size)}</div>
+            <div class="oname">${part.name}</div>
+            <div class="osize">${formatSize(part.size)}</div>
           </div>
-          <a href="${part.url}" download="${part.name}">
-            <button class="download-btn">Download</button>
-          </a>
+          <button class="dl-btn" data-url="${part.url}" data-name="${part.name}">Download</button>
         `;
         outputGrid.appendChild(div);
+        div.querySelector('.dl-btn').addEventListener('click', () => {
+          const a = document.createElement('a');
+          a.href = part.url; a.download = part.name; a.click();
+        });
       });
       outputSection.classList.add('visible');
       splitBtnText.textContent = 'Split Again';
       splitBtn.disabled = false;
+      showToast(`Done — ${parts.length} part${parts.length !== 1 ? 's' : ''}, ${formatSize(totalSize)} total`);
     }
 
     // ─── Download All ───
@@ -672,66 +796,91 @@
         const a = document.createElement('a');
         a.href = part.url; a.download = part.name; a.click();
       });
-      showToast('Downloading ' + state.outputParts.length + ' files');
     });
 
     // ─── FFmpeg Load ───
     async function ensureFFmpeg() {
       if (state.loaded) return state.ffmpeg;
-      const { FFmpeg } = window;
-      if (!FFmpeg) throw new Error('FFmpeg.wasm not loaded');
-      const ffmpeg = new FFmpeg();
-      ffmpeg.on('progress', ({ progress: p, time }) => {
-        if (state.progress.total > 0) {
-          const current = Math.round(p * state.progress.total * 100) / 100;
-          showProgress(state.progress.text, current, state.progress.total);
-        }
-      });
-      showProgress('Loading FFmpeg (~20MB)...', 0, 1);
-      await ffmpeg.load();
-      state.loaded = true;
-      state.ffmpeg = ffmpeg;
-      hideProgress();
-      return ffmpeg;
+
+      ffmpegLoading.classList.add('visible');
+      splitBtn.disabled = true;
+
+      try {
+        ffmpegStatus.textContent = 'Loading FFmpeg engine (~20MB)...';
+        const { FFmpeg } = FFmpegWasm;
+        const ffmpeg = new FFmpeg();
+
+        ffmpeg.on('log', ({ message }) => {
+          // can uncomment for debugging
+          // console.log('ffmpeg:', message);
+        });
+
+        ffmpeg.on('progress', ({ progress: p }) => {
+          // progress 0..1 for current operation
+          if (state.progress.total > 0) {
+            const pct = Math.round(p * 100);
+            showProgress(state.progress.text, pct);
+          }
+        });
+
+        // Load core
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+        await ffmpeg.load({
+          coreURL: baseURL + '/ffmpeg-core.js',
+          wasmURL: baseURL + '/ffmpeg-core.wasm',
+        });
+
+        state.loaded = true;
+        state.ffmpeg = ffmpeg;
+        ffmpegLoading.classList.remove('visible');
+        splitBtn.disabled = false;
+        return ffmpeg;
+      } catch (err) {
+        ffmpegLoading.classList.remove('visible');
+        splitBtn.disabled = false;
+        throw err;
+      }
     }
+
+    // Pre-load FFmpeg immediately so it's ready when the user needs it
+    loadFFmpeg().then(lib => {
+      FFmpegWasm = lib;
+      // Start loading core in background
+      ensureFFmpeg().catch(err => {
+        console.error('Pre-load ffmpeg failed:', err);
+        showToast('FFmpeg failed to load. Refresh and try again.');
+      });
+    }).catch(err => {
+      console.error('Failed to load FFmpeg.wasm lib:', err);
+      showToast('Failed to load FFmpeg engine. Check your internet connection.');
+    });
 
     // ─── Core splitting ───
     async function doSplit() {
       if (!state.file) return;
+      if (!state.loaded || !state.ffmpeg) {
+        showToast('FFmpeg engine is still loading. Please wait...');
+        return;
+      }
+
       splitBtn.disabled = true;
       splitBtnText.textContent = 'Processing...';
       hideOutput();
 
       try {
-        const ffmpeg = await ensureFFmpeg();
-
-        // Write input file to FFmpeg FS
+        const ffmpeg = state.ffmpeg;
+        const ext = outputFormat.value || 'mp4';
         const inputName = 'input' + getExtension(state.file.name);
+
+        // Write input file
+        ffmpegLoading.classList.add('visible');
+        ffmpegStatus.textContent = 'Loading video into memory...';
         const inputData = await state.file.arrayBuffer();
         ffmpeg.writeFile(inputName, new Uint8Array(inputData));
+        ffmpegLoading.classList.remove('visible');
 
-        // Determine output extension
-        const ext = outputFormat.value === 'gif' ? 'gif' : outputFormat.value || 'mp4';
-        const outExt = ext;
-
-        // Build base args
-        const baseArgs = ['-i', inputName, '-c:v', ext === 'gif' ? 'gif' : 'libx264', '-crf', qualitySlider.value];
-        if (resolutionSelect.value) {
-          baseArgs.push('-vf', `scale=${resolutionSelect.value}`);
-        }
-        if (fpsSelect.value) {
-          baseArgs.push('-r', fpsSelect.value);
-        }
-        if (ext !== 'gif') {
-          baseArgs.push('-preset', 'fast', '-c:a', 'aac', '-b:a', '128k');
-        }
-
-        // Get input duration
-        const probe = await getDuration(ffmpeg, inputName);
-        const totalDur = probe > 0 ? probe : state.duration || 300;
-        state.duration = totalDur;
-
-        if (totalDur <= 0) {
+        const totalDur = state.duration;
+        if (!totalDur || totalDur <= 0) {
           showToast('Could not determine video duration');
           splitBtn.disabled = false; splitBtnText.textContent = 'Split Video';
           return;
@@ -745,86 +894,78 @@
           const count = Number(partsSlider.value);
           const segDur = totalDur / count;
           for (let i = 0; i < count; i++) {
-            segments.push({ start: i * segDur, end: (i + 1) * segDur });
+            segments.push({ start: i * segDur, end: Math.min((i + 1) * segDur, totalDur) });
           }
         } else if (mode === 'duration') {
           const segDur = Number(durationSlider.value);
           for (let start = 0; start < totalDur; start += segDur) {
             segments.push({ start, end: Math.min(start + segDur, totalDur) });
           }
-        } else { // size mode - estimate from bitrate
+        } else { // size
           const fileSizeMB = state.file.size / (1024 * 1024);
           const targetMB = Number(sizeSlider.value);
-          const approxCount = Math.max(1, Math.ceil(fileSizeMB / targetMB));
-          // Use duration-based split with calculated segment duration
-          const segDur = totalDur / approxCount;
-          for (let i = 0; i < approxCount; i++) {
-            segments.push({ start: i * segDur, end: (i + 1) * segDur });
+          const count = Math.max(1, Math.ceil(fileSizeMB / targetMB));
+          const segDur = totalDur / count;
+          for (let i = 0; i < count; i++) {
+            segments.push({ start: i * segDur, end: Math.min((i + 1) * segDur, totalDur) });
           }
         }
 
-        // Cap last segment
-        if (segments.length > 0) {
-          segments[segments.length - 1].end = totalDur;
-        }
-
         if (segments.length === 0) {
-          showToast('Could not split video (duration unknown)');
+          showToast('Could not determine split points');
           splitBtn.disabled = false; splitBtnText.textContent = 'Split Video';
           return;
         }
 
-        // Process segments
         const parts = [];
-        state.progress = { current: 0, total: segments.length, text: 'Splitting...' };
-        showProgress('Splitting...', 0, segments.length);
-
         const baseName = state.file.name.replace(/\.[^.]+$/, '');
+        const needsReencode = resolutionSelect.value || fpsSelect.value || Number(qualitySlider.value) < 28;
+
+        state.progress = { text: '', total: segments.length };
 
         for (let i = 0; i < segments.length; i++) {
           const seg = segments[i];
           const dur = seg.end - seg.start;
-          const outName = `${baseName}_part${i + 1}.${outExt}`;
+          const outName = `${baseName}_part${i + 1}.${ext}`;
 
-          const args = [
-            '-ss', String(seg.start),
-            '-i', inputName,
-            '-t', String(dur),
-            '-c', 'copy',
-          ];
+          state.progress.text = `Part ${i + 1} of ${segments.length}`;
+          showProgress(`Part ${i + 1} of ${segments.length}...`, 0);
 
-          // For non-copy mode (when re-encoding for quality/resolution changes)
-          const needsReencode = resolutionSelect.value || fpsSelect.value || Number(qualitySlider.value) < 28;
+          const args = [];
+
           if (needsReencode) {
-            args.length = 0; // reset
+            // Full re-encode
             args.push('-ss', String(seg.start), '-i', inputName, '-t', String(dur));
-            args.push('-c:v', ext === 'gif' ? 'gif' : 'libx264');
-            args.push('-crf', qualitySlider.value);
-            if (resolutionSelect.value) args.push('-vf', `scale=${resolutionSelect.value}`);
-            if (fpsSelect.value) args.push('-r', fpsSelect.value);
-            args.push('-preset', 'fast');
-            if (ext !== 'gif') args.push('-c:a', 'aac', '-b:a', '128k');
+            if (ext === 'gif') {
+              args.push('-vf', `fps=10,scale=320:-1:flags=lanczos`);
+              if (resolutionSelect.value) {
+                args[args.length - 1] = `fps=10,scale=${resolutionSelect.value.replace('x', ':')}:flags=lanczos`;
+              }
+            } else {
+              args.push('-c:v', 'libx264', '-crf', qualitySlider.value);
+              if (resolutionSelect.value) args.push('-vf', `scale=${resolutionSelect.value}`);
+              if (fpsSelect.value) args.push('-r', fpsSelect.value);
+              args.push('-preset', 'fast', '-c:a', 'aac', '-b:a', '128k');
+            }
+          } else {
+            // Stream copy (fast)
+            args.push('-ss', String(seg.start), '-i', inputName, '-t', String(dur), '-c', 'copy');
           }
 
           args.push('-y', outName);
 
-          state.progress.current = i;
-          showProgress(`Part ${i + 1} of ${segments.length}...`, i, segments.length);
-
           await ffmpeg.exec(args);
 
           const data = ffmpeg.readFile(outName);
-          const blob = new Blob([data.buffer || data], { type: `video/${ext === 'gif' ? 'gif' : ext}` });
+          const blob = new Blob([data], { type: ext === 'gif' ? 'image/gif' : `video/${ext}` });
           const url = URL.createObjectURL(blob);
           parts.push({ name: outName, size: blob.size, url, blob });
           ffmpeg.deleteFile(outName);
         }
 
         ffmpeg.deleteFile(inputName);
-
         hideProgress();
         showOutput(parts);
-        showToast(`Split complete — ${parts.length} parts ready`);
       } catch (err) {
         console.error('Split error:', err);
         showToast('Error: ' + (err.message || 'Processing failed'));
@@ -835,26 +976,12 @@
       }
     }
 
-    // ─── Helper: get video duration via FFprobe ───
-    async function getDuration(ffmpeg, filename) {
-      try {
-        ffmpeg.writeFile('probe.txt', new Uint8Array([0]));
-        await ffmpeg.exec(['-i', filename, '-f', 'null', '-']);
-        return 0; // can't easily parse from FFmpeg log, fall back
-      } catch {
-        return 0;
-      }
-    }
-
     function getExtension(name) {
       const i = name.lastIndexOf('.');
       return i >= 0 ? name.substring(i) : '.mp4';
     }
 
-    // ─── Split button ───
     splitBtn.addEventListener('click', doSplit);
-
-    // ─── Init ───
     console.log('ClipForge ready');
     showToast('Drop a video to get started');
   </script>
