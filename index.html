@@ -107,6 +107,54 @@
     }
     .file-info .change-btn:hover { background: var(--surface2); color: var(--text); }
 
+    .files-panel {
+      display: none; margin-top: 1rem; background: var(--surface);
+      border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;
+    }
+    .files-panel.visible { display: block; }
+    .files-panel-header {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+      padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface2);
+    }
+    .files-panel-header .count { font-size: 0.85rem; font-weight: 600; }
+    .files-panel-actions { display: flex; gap: 0.4rem; }
+    .files-panel-actions button {
+      font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--text2); cursor: pointer; font-family: inherit;
+    }
+    .files-panel-actions button:hover { border-color: var(--accent); color: var(--accent); }
+    .files-list { list-style: none; max-height: 200px; overflow-y: auto; }
+    .files-list li {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border); font-size: 0.82rem;
+    }
+    .files-list li:last-child { border-bottom: none; }
+    .files-list li .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .files-list li .fmeta { color: var(--text2); font-size: 0.75rem; white-space: nowrap; }
+    .files-list li .remove-file {
+      border: none; background: transparent; color: var(--text3); cursor: pointer; padding: 2px 6px; font-size: 1rem;
+    }
+    .files-list li .remove-file:hover { color: #ff1744; }
+
+    .num-input {
+      width: 4.5rem; flex-shrink: 0; text-align: center; padding: 0.35rem 0.4rem !important;
+      font-weight: 600; color: var(--accent) !important;
+    }
+    .num-input.wide { width: 5.5rem; }
+    .fast-mode-row {
+      grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 0.6rem;
+      padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); background: var(--accent-dim);
+      border: 1px solid rgba(108,92,231,0.25);
+    }
+    .fast-mode-row input { accent-color: var(--accent); margin-top: 2px; }
+    .fast-mode-row .fast-label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .fast-mode-row .fast-hint { font-size: 0.72rem; color: var(--text2); margin-top: 0.15rem; }
+    .output-group { margin-bottom: 1rem; }
+    .output-group-title {
+      font-size: 0.8rem; font-weight: 600; color: var(--text2); margin-bottom: 0.4rem;
+      padding-bottom: 0.35rem; border-bottom: 1px solid var(--border);
+    }
+
     /* Video Preview */
     .preview-section {
       display: none;
@@ -234,6 +282,9 @@
     }
     .output-header h3 { font-size: 0.95rem; font-weight: 600; }
     .output-header .count { color: var(--text2); font-size: 0.8rem; }
+    .output-hint {
+      font-size: 0.75rem; color: var(--text3); margin: -0.25rem 0 0.6rem;
+    }
     .output-grid { display: grid; gap: 0.5rem; }
     .output-item {
       display: flex; align-items: center; gap: 0.8rem;
@@ -254,6 +305,10 @@
       transition: 0.15s; white-space: nowrap;
     }
     .output-item .dl-btn:hover { background: var(--accent-hover); }
+    .output-item .dl-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .output-item.processing .osize { color: var(--accent); }
+    .output-item.ready .idx { background: var(--accent-dim); color: var(--accent); }
+    .output-group-parts { display: grid; gap: 0.5rem; }
     .download-all-btn {
       display: inline-flex; align-items: center; gap: 0.4rem;
       margin-top: 0.75rem; padding: 0.6rem 1.2rem;
@@ -343,19 +398,24 @@
     <!-- Drop Zone -->
     <div class="drop-zone" id="dropZone">
       <span class="icon"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#5a6070" stroke-width="2"><rect x="6" y="8" width="36" height="28" rx="6"/><circle cx="16" cy="20" r="5"/><path d="M18 20l8-6v12l-8-6z"/></svg></span>
-      <h2>Drop a video file here</h2>
-      <p>or click to browse &middot; MP4, MOV, AVI, MKV, WebM, GIF &amp; more</p>
+      <h2>Drop video files here</h2>
+      <p>or click to browse &middot; one or many videos at once</p>
       <div class="fmt">
         <span>MP4</span><span>MOV</span><span>AVI</span><span>MKV</span><span>WebM</span><span>GIF</span>
       </div>
-      <input type="file" id="fileInput" accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.gif,.flv,.wmv,.m4v,.3gp" />
+      <input type="file" id="fileInput" accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.gif,.flv,.wmv,.m4v,.3gp" multiple />
     </div>
 
-    <!-- File Info -->
-    <div class="file-info" id="fileInfo">
-      <span class="name" id="fileName">video.mp4</span>
-      <span class="meta" id="fileMeta">15.2 MB &middot; 00:03:24</span>
-      <button class="change-btn" id="changeFileBtn">Change</button>
+    <!-- Files queue -->
+    <div class="files-panel" id="filesPanel">
+      <div class="files-panel-header">
+        <span class="count" id="filesCount">0 videos</span>
+        <div class="files-panel-actions">
+          <button type="button" id="addMoreBtn">Add more</button>
+          <button type="button" id="clearFilesBtn">Clear all</button>
+        </div>
+      </div>
+      <ul class="files-list" id="filesList"></ul>
     </div>
 
     <!-- Video Preview -->
@@ -382,10 +442,18 @@
     <div class="controls" id="controls">
       <div class="control-grid">
         <!-- Size mode -->
+        <div class="fast-mode-row full-width">
+          <input type="checkbox" id="fastModeToggle" checked />
+          <div>
+            <div class="fast-label">Fast split (recommended)</div>
+            <div class="fast-hint">Stream copy, one pass — no re-encode. Usually finishes in seconds.</div>
+          </div>
+        </div>
         <div class="control-group" data-for="size" id="sizeGroup">
-          <label>Max size per part</label>
+          <label>Max size per part (MB)</label>
           <div class="range-row">
             <input type="range" id="sizeSlider" min="5" max="500" value="50" step="5" />
+            <input type="number" class="num-input" id="sizeInput" min="1" max="10000" value="50" title="Type max MB per part" />
             <span class="value" id="sizeLabel">50 MB</span>
           </div>
           <div class="info-row">
@@ -396,7 +464,8 @@
         <div class="control-group" data-for="parts" id="partsGroup" style="display:none">
           <label>Number of parts</label>
           <div class="range-row">
-            <input type="range" id="partsSlider" min="2" max="20" value="4" step="1" />
+            <input type="range" id="partsSlider" min="2" max="50" value="4" step="1" />
+            <input type="number" class="num-input" id="partsInput" min="2" max="999" value="4" title="Type number of parts" />
             <span class="value" id="partsLabel">4</span>
           </div>
           <div class="info-row">
@@ -405,9 +474,10 @@
         </div>
         <!-- Duration mode -->
         <div class="control-group" data-for="duration" id="durationGroup" style="display:none">
-          <label>Duration per part</label>
+          <label>Duration per part (seconds)</label>
           <div class="range-row">
-            <input type="range" id="durationSlider" min="10" max="600" value="60" step="5" />
+            <input type="range" id="durationSlider" min="10" max="3600" value="60" step="5" />
+            <input type="number" class="num-input wide" id="durationInput" min="1" max="86400" value="60" title="Seconds per part" />
             <span class="value" id="durationLabel">1:00</span>
           </div>
           <div class="info-row">
@@ -470,7 +540,7 @@
 
     <!-- Split Button -->
     <button class="split-btn" id="splitBtn">
-      <span id="splitBtnText">Split Video</span>
+      <span id="splitBtnText">Split Videos</span>
     </button>
 
     <!-- Loading overlay -->
@@ -499,8 +569,9 @@
     <div class="output-section" id="outputSection">
       <div class="output-header">
         <h3>Split Results</h3>
-        <span class="count" id="outputCount">0 parts</span>
+        <span class="count" id="outputCount">Waiting...</span>
       </div>
+      <p class="output-hint" id="outputHint">Parts show up here as they finish. You can download each one while the rest are still processing.</p>
       <div class="output-grid" id="outputGrid"></div>
       <button class="download-all-btn" id="downloadAllBtn">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 011 1v6.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L7 8.586V2a1 1 0 011-1z"/><path d="M2 13a1 1 0 011 1h10a1 1 0 011-1H2z"/></svg>
@@ -521,26 +592,26 @@
 
     // ─── State ───
     const state = {
-      file: null,
-      fileUrl: null,
-      duration: 0,
+      files: [],
+      previewUrl: null,
       mode: 'size',
       progress: { current: 0, total: 1, text: '' },
       outputParts: [],
       ffmpeg: null,
       loaded: false,
-      ffmpegLib: null,
-      toBlobURL: null,
     };
+    let fileIdSeq = 0;
 
     // ─── DOM ───
     const $ = id => document.getElementById(id);
     const dropZone = $('dropZone');
     const fileInput = $('fileInput');
-    const fileInfo = $('fileInfo');
-    const fileName = $('fileName');
-    const fileMeta = $('fileMeta');
-    const changeFileBtn = $('changeFileBtn');
+    const filesPanel = $('filesPanel');
+    const filesList = $('filesList');
+    const filesCount = $('filesCount');
+    const addMoreBtn = $('addMoreBtn');
+    const clearFilesBtn = $('clearFilesBtn');
+    const fastModeToggle = $('fastModeToggle');
     const previewSection = $('previewSection');
     const previewToggle = $('previewToggle');
     const previewVideo = $('previewVideo');
@@ -564,12 +635,15 @@
     const downloadAllBtn = $('downloadAllBtn');
 
     const sizeSlider = $('sizeSlider');
+    const sizeInput = $('sizeInput');
     const sizeLabel = $('sizeLabel');
     const sizeEstimate = $('sizeEstimate');
     const partsSlider = $('partsSlider');
+    const partsInput = $('partsInput');
     const partsLabel = $('partsLabel');
     const partsEstimate = $('partsEstimate');
     const durationSlider = $('durationSlider');
+    const durationInput = $('durationInput');
     const durationLabel = $('durationLabel');
     const durationEstimate = $('durationEstimate');
     const outputFormat = $('outputFormat');
@@ -616,41 +690,82 @@
       return `${m}m ${s}s`;
     }
 
+    function clamp(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function getSizeMB() {
+      return clamp(Number(sizeInput.value) || Number(sizeSlider.value), 1, 10000);
+    }
+    function getPartsCount() {
+      return clamp(Math.round(Number(partsInput.value) || Number(partsSlider.value)), 2, 999);
+    }
+    function getDurationSec() {
+      return clamp(Math.round(Number(durationInput.value) || Number(durationSlider.value)), 1, 86400);
+    }
+
+    function syncSizeUI(fromInput) {
+      let v = fromInput ? getSizeMB() : Number(sizeSlider.value);
+      v = clamp(v, Number(sizeSlider.min), Number(sizeSlider.max));
+      sizeSlider.value = v;
+      sizeInput.value = v;
+      sizeLabel.textContent = v + ' MB';
+      updateEstimates();
+    }
+    function syncPartsUI(fromInput) {
+      let v = fromInput ? getPartsCount() : Number(partsSlider.value);
+      v = clamp(v, Number(partsSlider.min), 999);
+      partsSlider.value = Math.min(v, Number(partsSlider.max));
+      partsInput.value = v;
+      partsLabel.textContent = String(v);
+      updateEstimates();
+    }
+    function syncDurationUI(fromInput) {
+      let v = fromInput ? getDurationSec() : Number(durationSlider.value);
+      v = clamp(v, Number(durationSlider.min), 86400);
+      durationSlider.value = Math.min(v, Number(durationSlider.max));
+      durationInput.value = v;
+      durationLabel.textContent = formatDuration(v);
+      updateEstimates();
+    }
+
+    function primaryFile() {
+      return state.files[0] || null;
+    }
+
     // ─── Estimates ───
     function updateEstimates() {
-      if (!state.file || !state.duration) return;
+      const entry = primaryFile();
+      if (!entry || !entry.duration) return;
 
-      const sizeMB = state.file.size / (1024 * 1024);
+      const sizeMB = entry.file.size / (1024 * 1024);
       const mode = state.mode;
 
       if (mode === 'size') {
-        const targetMB = Number(sizeSlider.value);
+        const targetMB = getSizeMB();
         const count = Math.max(1, Math.ceil(sizeMB / targetMB));
-        sizeEstimate.textContent = `~${count} part${count > 1 ? 's' : ''} (${formatSize(state.file.size)} total)`;
+        sizeEstimate.textContent = `~${count} part${count > 1 ? 's' : ''} per video (${formatSize(entry.file.size)})`;
       } else if (mode === 'parts') {
-        const count = Number(partsSlider.value);
+        const count = getPartsCount();
         const perPart = sizeMB / count;
-        partsEstimate.textContent = `~${perPart.toFixed(1)} MB per part (${count} parts total)`;
+        partsEstimate.textContent = `~${perPart.toFixed(1)} MB per part (${count} parts)`;
       } else if (mode === 'duration') {
-        const segDur = Number(durationSlider.value);
-        const count = Math.max(1, Math.ceil(state.duration / segDur));
-        durationEstimate.textContent = `~${count} part${count > 1 ? 's' : ''} (${formatDurationLong(state.duration)} total)`;
+        const segDur = getDurationSec();
+        const count = Math.max(1, Math.ceil(entry.duration / segDur));
+        durationEstimate.textContent = `~${count} part${count > 1 ? 's' : ''} (${formatDurationLong(entry.duration)})`;
       }
     }
 
-    // ─── Slider bindings ───
-    sizeSlider.addEventListener('input', () => {
-      sizeLabel.textContent = sizeSlider.value + ' MB';
-      updateEstimates(); hideOutput();
-    });
-    partsSlider.addEventListener('input', () => {
-      partsLabel.textContent = partsSlider.value;
-      updateEstimates(); hideOutput();
-    });
-    durationSlider.addEventListener('input', () => {
-      durationLabel.textContent = formatDuration(Number(durationSlider.value));
-      updateEstimates(); hideOutput();
-    });
+    // ─── Slider + manual input bindings ───
+    sizeSlider.addEventListener('input', () => { syncSizeUI(false); hideOutput(); });
+    sizeInput.addEventListener('change', () => { syncSizeUI(true); hideOutput(); });
+    sizeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { syncSizeUI(true); hideOutput(); } });
+    partsSlider.addEventListener('input', () => { syncPartsUI(false); hideOutput(); });
+    partsInput.addEventListener('change', () => { syncPartsUI(true); hideOutput(); });
+    partsInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { syncPartsUI(true); hideOutput(); } });
+    durationSlider.addEventListener('input', () => { syncDurationUI(false); hideOutput(); });
+    durationInput.addEventListener('change', () => { syncDurationUI(true); hideOutput(); });
+    durationInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { syncDurationUI(true); hideOutput(); } });
     outputFormat.addEventListener('change', hideOutput);
     qualitySlider.addEventListener('input', () => {
       const v = Number(qualitySlider.value);
@@ -667,8 +782,8 @@
     // ─── Preview toggle ───
     previewToggle.addEventListener('change', () => {
       previewVideo.classList.toggle('visible', previewToggle.checked);
-      if (previewToggle.checked && state.fileUrl) {
-        previewVideo.src = state.fileUrl;
+      if (previewToggle.checked && state.previewUrl) {
+        previewVideo.src = state.previewUrl;
       }
     });
 
@@ -695,69 +810,117 @@
     });
 
     // ─── File handling ───
-    function handleFile(file) {
-      if (!file || !file.type.startsWith('video/')) {
-        showToast('Please select a valid video file');
-        return;
-      }
-      state.file = file;
-      if (state.fileUrl) URL.revokeObjectURL(state.fileUrl);
-      state.fileUrl = URL.createObjectURL(file);
-      fileName.textContent = file.name;
+    async function probeDuration(file) {
+      const url = URL.createObjectURL(file);
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          resolve({ duration: video.duration || 0, url });
+          video.remove();
+        };
+        video.onerror = () => {
+          resolve({ duration: 0, url });
+          video.remove();
+        };
+        video.src = url;
+      });
+    }
 
-      previewVideo.src = state.fileUrl;
+    function renderFilesList() {
+      filesList.innerHTML = '';
+      state.files.forEach((entry) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="fname">${entry.file.name}</span>
+          <span class="fmeta">${formatSize(entry.file.size)} · ${entry.duration ? formatDurationLong(entry.duration) : '…'}</span>
+          <button type="button" class="remove-file" title="Remove">×</button>
+        `;
+        li.querySelector('.remove-file').addEventListener('click', () => removeFile(entry.id));
+        filesList.appendChild(li);
+      });
+      const n = state.files.length;
+      filesCount.textContent = n + ' video' + (n !== 1 ? 's' : '');
+    }
+
+    function removeFile(id) {
+      const idx = state.files.findIndex((f) => f.id === id);
+      if (idx < 0) return;
+      if (state.files[idx].url) URL.revokeObjectURL(state.files[idx].url);
+      state.files.splice(idx, 1);
+      if (state.previewUrl) {
+        URL.revokeObjectURL(state.previewUrl);
+        state.previewUrl = null;
+      }
+      if (state.files.length) {
+        state.previewUrl = state.files[0].url;
+        previewVideo.src = state.previewUrl;
+      } else {
+        clearAllFiles();
+      }
+      renderFilesList();
+      updateEstimates();
+    }
+
+    function clearAllFiles() {
+      state.files.forEach((f) => { if (f.url) URL.revokeObjectURL(f.url); });
+      state.files = [];
+      if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+      state.previewUrl = null;
+      previewVideo.src = '';
       previewVideo.classList.remove('visible');
       previewToggle.checked = false;
+      dropZone.style.display = 'block';
+      filesPanel.classList.remove('visible');
+      previewSection.classList.remove('visible');
+      modeSection.classList.remove('visible');
+      controls.classList.remove('visible');
+      splitBtn.classList.remove('visible');
+      hideOutput();
+      hideProgress();
+      fileInput.value = '';
+    }
 
-      fileInfo.classList.add('visible');
+    async function addFiles(fileList) {
+      const added = [];
+      for (const file of fileList) {
+        if (!file.type.startsWith('video/')) continue;
+        const { duration, url } = await probeDuration(file);
+        added.push({ id: ++fileIdSeq, file, duration, url });
+      }
+      if (!added.length) {
+        showToast('Please add valid video files');
+        return;
+      }
+      state.files.push(...added);
+      if (!state.previewUrl) {
+        state.previewUrl = state.files[0].url;
+        previewVideo.src = state.previewUrl;
+      }
       dropZone.style.display = 'none';
+      filesPanel.classList.add('visible');
       previewSection.classList.add('visible');
       modeSection.classList.add('visible');
       controls.classList.add('visible');
       splitBtn.classList.add('visible');
-      splitBtnText.textContent = 'Split Video';
       splitBtn.disabled = false;
-      hideOutput(); hideProgress();
-
-      // Get metadata
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      video.onloadedmetadata = () => {
-        const dur = video.duration;
-        fileMeta.textContent = formatSize(file.size) + ' · ' + formatDurationLong(dur);
-        state.duration = dur;
-        updateEstimates();
-        video.remove();
-      };
-      video.onerror = () => {
-        fileMeta.textContent = formatSize(file.size);
-        state.duration = 0;
-        video.remove();
-      };
-      video.src = state.fileUrl;
+      renderFilesList();
+      updateEstimates();
+      hideOutput();
     }
 
     dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    addMoreBtn.addEventListener('click', () => fileInput.click());
+    clearFilesBtn.addEventListener('click', clearAllFiles);
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault(); dropZone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
     });
     fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) handleFile(fileInput.files[0]);
-    });
-    changeFileBtn.addEventListener('click', () => {
-      state.file = null; if (state.fileUrl) URL.revokeObjectURL(state.fileUrl);
-      state.duration = 0;
-      previewVideo.src = '';
-      previewVideo.classList.remove('visible');
-      previewSection.classList.remove('visible');
-      previewToggle.checked = false;
-      dropZone.style.display = 'block'; fileInfo.classList.remove('visible');
-      modeSection.classList.remove('visible'); controls.classList.remove('visible');
-      splitBtn.classList.remove('visible');
-      hideOutput(); hideProgress();
+      if (fileInput.files.length) addFiles(fileInput.files);
       fileInput.value = '';
     });
 
@@ -774,47 +937,76 @@
       progressFill.style.width = '0%';
     }
 
-    // ─── Output ───
+    // ─── Output (streaming: each part downloadable as soon as ready) ───
     function hideOutput() {
       outputSection.classList.remove('visible');
+      state.outputParts.forEach((p) => { if (p.url) URL.revokeObjectURL(p.url); });
       state.outputParts = [];
       outputGrid.innerHTML = '';
     }
 
-    function showOutput(parts) {
-      state.outputParts = parts;
-      outputCount.textContent = parts.length + ' part' + (parts.length !== 1 ? 's' : '');
-      const totalSize = parts.reduce((s, p) => s + p.size, 0);
+    function revokeOutputParts() {
+      state.outputParts.forEach((p) => { if (p.url) URL.revokeObjectURL(p.url); });
+    }
+
+    function updateOutputCount(processingNote) {
+      const n = state.outputParts.length;
+      if (processingNote) {
+        outputCount.textContent = processingNote;
+      } else {
+        outputCount.textContent = n + ' ready to download';
+      }
+    }
+
+    function downloadPart(part) {
+      const a = document.createElement('a');
+      a.href = part.url;
+      a.download = part.name;
+      a.click();
+    }
+
+    function beginOutputSession() {
+      revokeOutputParts();
+      state.outputParts = [];
       outputGrid.innerHTML = '';
-      parts.forEach((part, i) => {
-        const div = document.createElement('div');
-        div.className = 'output-item';
-        div.innerHTML = `
-          <div class="idx">${i + 1}</div>
-          <div class="info">
-            <div class="oname">${part.name}</div>
-            <div class="osize">${formatSize(part.size)}</div>
-          </div>
-          <button class="dl-btn" data-url="${part.url}" data-name="${part.name}">Download</button>
-        `;
-        outputGrid.appendChild(div);
-        div.querySelector('.dl-btn').addEventListener('click', () => {
-          const a = document.createElement('a');
-          a.href = part.url; a.download = part.name; a.click();
-        });
-      });
       outputSection.classList.add('visible');
-      splitBtnText.textContent = 'Split Again';
-      splitBtn.disabled = false;
-      showToast(`Done — ${parts.length} part${parts.length !== 1 ? 's' : ''}, ${formatSize(totalSize)} total`);
+      outputHint.style.display = 'block';
+      updateOutputCount('Processing…');
+    }
+
+    function appendOutputPart(part, container) {
+      state.outputParts.push(part);
+      const div = document.createElement('div');
+      div.className = 'output-item ready';
+      const idx = container.querySelectorAll('.output-item').length + 1;
+      div.innerHTML = `
+        <div class="idx">${idx}</div>
+        <div class="info">
+          <div class="oname">${part.name}</div>
+          <div class="osize">${formatSize(part.size)} · ready</div>
+        </div>
+        <button type="button" class="dl-btn">Download</button>
+      `;
+      div.querySelector('.dl-btn').addEventListener('click', () => downloadPart(part));
+      (container || outputGrid).appendChild(div);
+      updateOutputCount();
+      showToast('Ready: ' + part.name);
+    }
+
+    function createFileOutputGroup(sourceName) {
+      const group = document.createElement('div');
+      group.className = 'output-group';
+      group.innerHTML = `<div class="output-group-title">${sourceName}</div>`;
+      const partsEl = document.createElement('div');
+      partsEl.className = 'output-group-parts';
+      group.appendChild(partsEl);
+      outputGrid.appendChild(group);
+      return partsEl;
     }
 
     // ─── Download All ───
     downloadAllBtn.addEventListener('click', () => {
-      state.outputParts.forEach(part => {
-        const a = document.createElement('a');
-        a.href = part.url; a.download = part.name; a.click();
-      });
+      state.outputParts.forEach((part) => downloadPart(part));
     });
 
     // Same-origin asset URLs (vendor/ is deployed with the site — Workers cannot load from CDN)
@@ -931,143 +1123,198 @@
       });
     });
 
+    function getExtension(name) {
+      const i = name.lastIndexOf('.');
+      return i >= 0 ? name.substring(i) : '.mp4';
+    }
+
+    function needsReencode(file) {
+      if (fastModeToggle.checked) return false;
+      const inExt = getExtension(file.name).slice(1).toLowerCase();
+      const outExt = outputFormat.value;
+      if (outExt === 'gif') return true;
+      if (outExt !== inExt) return true;
+      if (resolutionSelect.value || fpsSelect.value) return true;
+      if (Number(qualitySlider.value) < 28) return true;
+      return false;
+    }
+
+    function getOutputExt(file) {
+      if (fastModeToggle.checked) {
+        const e = getExtension(file.name).slice(1).toLowerCase();
+        return e || 'mp4';
+      }
+      return outputFormat.value || 'mp4';
+    }
+
+    function buildSegmentPlan(totalDur, fileSizeBytes) {
+      const mode = state.mode;
+      if (mode === 'parts') {
+        const count = getPartsCount();
+        const times = [];
+        for (let i = 1; i < count; i++) times.push((totalDur * i / count).toFixed(3));
+        return { segmentTimes: times };
+      }
+      if (mode === 'duration') {
+        return { segmentTime: getDurationSec() };
+      }
+      const fileSizeMB = fileSizeBytes / (1024 * 1024);
+      const count = Math.max(1, Math.ceil(fileSizeMB / getSizeMB()));
+      const times = [];
+      for (let i = 1; i < count; i++) times.push((totalDur * i / count).toFixed(3));
+      return { segmentTimes: times };
+    }
+
+    async function splitOneFile(ffmpeg, entry, partsContainer, fileIndex, fileCount) {
+      const file = entry.file;
+      const totalDur = entry.duration;
+      if (!totalDur || totalDur <= 0) throw new Error('Could not read duration for ' + file.name);
+
+      const ext = getOutputExt(file);
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      const inputName = `in_${entry.id}${getExtension(file.name)}`;
+      const fsPrefix = `out_${entry.id}_`;
+      const outPattern = `${fsPrefix}part%03d.${ext}`;
+      const reencode = needsReencode(file);
+
+      showProgress(`Loading ${file.name}…`, 5);
+      const inputData = await file.arrayBuffer();
+      await ffmpeg.writeFile(inputName, new Uint8Array(inputData));
+
+      const plan = buildSegmentPlan(totalDur, file.size);
+
+      if (!reencode) {
+        const args = ['-i', inputName, '-map', '0', '-c', 'copy', '-f', 'segment', '-reset_timestamps', '1'];
+        if (plan.segmentTime) {
+          args.push('-segment_time', String(plan.segmentTime));
+        } else if (plan.segmentTimes && plan.segmentTimes.length) {
+          args.push('-segment_times', plan.segmentTimes.join(','));
+        } else {
+          args.push('-segment_time', String(Math.max(1, totalDur)));
+        }
+        args.push('-y', outPattern);
+        state.progress.total = 1;
+        showProgress(`Fast split: ${file.name} (one pass)…`, 10);
+        await ffmpeg.exec(args);
+      } else {
+        let segments = [];
+        if (plan.segmentTime) {
+          for (let start = 0; start < totalDur; start += plan.segmentTime) {
+            segments.push({ start, end: Math.min(start + plan.segmentTime, totalDur) });
+          }
+        } else {
+          const count = plan.segmentTimes.length + 1;
+          const segDur = totalDur / count;
+          for (let i = 0; i < count; i++) {
+            segments.push({ start: i * segDur, end: Math.min((i + 1) * segDur, totalDur) });
+          }
+        }
+        state.progress.total = segments.length;
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          const dur = seg.end - seg.start;
+          const outName = `${fsPrefix}part${String(i + 1).padStart(3, '0')}.${ext}`;
+          showProgress(`${file.name} — part ${i + 1}/${segments.length}`, Math.round((i / segments.length) * 100));
+          const args = ['-ss', String(seg.start), '-i', inputName, '-t', String(dur)];
+          if (ext === 'gif') {
+            args.push('-vf', 'fps=10,scale=320:-1:flags=lanczos');
+          } else {
+            args.push('-c:v', 'libx264', '-crf', qualitySlider.value, '-preset', 'ultrafast');
+            if (resolutionSelect.value) args.push('-vf', `scale=${resolutionSelect.value}`);
+            if (fpsSelect.value) args.push('-r', fpsSelect.value);
+            args.push('-c:a', 'aac', '-b:a', '128k');
+          }
+          args.push('-y', outName);
+          await ffmpeg.exec(args);
+          const data = await ffmpeg.readFile(outName);
+          const blob = new Blob([data], { type: ext === 'gif' ? 'image/gif' : `video/${ext}` });
+          appendOutputPart({
+            name: `${baseName}_part${i + 1}.${ext}`,
+            size: blob.size,
+            url: URL.createObjectURL(blob),
+            blob,
+          }, partsContainer);
+          await ffmpeg.deleteFile(outName);
+        }
+        await ffmpeg.deleteFile(inputName);
+        return;
+      }
+
+      const entries = await ffmpeg.listDir('.');
+      const outs = entries
+        .filter((e) => !e.isDir && e.name.startsWith(fsPrefix) && e.name.endsWith('.' + ext))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+      for (let i = 0; i < outs.length; i++) {
+        const outName = outs[i].name;
+        showProgress(`${file.name} — saving part ${i + 1}/${outs.length}`, Math.round(((i + 1) / outs.length) * 100));
+        const data = await ffmpeg.readFile(outName);
+        const blob = new Blob([data], { type: ext === 'gif' ? 'image/gif' : `video/${ext}` });
+        appendOutputPart({
+          name: `${baseName}_part${i + 1}.${ext}`,
+          size: blob.size,
+          url: URL.createObjectURL(blob),
+          blob,
+        }, partsContainer);
+        await ffmpeg.deleteFile(outName);
+      }
+      await ffmpeg.deleteFile(inputName);
+    }
+
     // ─── Core splitting ───
     async function doSplit() {
-      if (!state.file) return;
+      if (!state.files.length) return;
 
-      // Ensure engine is loaded (awaits the pre-load if still in progress)
       if (!state.loaded || !state.ffmpeg) {
         showToast('Starting FFmpeg engine...');
         try {
           await ffmpegLoadPromise;
           if (!state.loaded || !state.ffmpeg) throw new Error('Engine not available');
-        } catch (err) {
-          showToast('FFmpeg engine is still loading. Please wait a moment...');
+        } catch {
+          showToast('FFmpeg engine is still loading. Please wait...');
           return;
         }
       }
 
       splitBtn.disabled = true;
       splitBtnText.textContent = 'Processing...';
-      hideOutput();
+      beginOutputSession();
+      progressSection.classList.add('visible');
+
+      const ffmpeg = state.ffmpeg;
+      const totalFiles = state.files.length;
 
       try {
-        const ffmpeg = state.ffmpeg;
-        const ext = outputFormat.value || 'mp4';
-        const inputName = 'input' + getExtension(state.file.name);
+        for (let fi = 0; fi < totalFiles; fi++) {
+          const entry = state.files[fi];
+          updateOutputCount(`Video ${fi + 1}/${totalFiles} — parts appear as they finish`);
+          const partsContainer = totalFiles > 1
+            ? createFileOutputGroup(entry.file.name)
+            : outputGrid;
 
-        // Write input file
-        ffmpegLoading.classList.add('visible');
-        ffmpegStatus.textContent = 'Loading video into memory...';
-        const inputData = await state.file.arrayBuffer();
-        ffmpeg.writeFile(inputName, new Uint8Array(inputData));
-        ffmpegLoading.classList.remove('visible');
-
-        const totalDur = state.duration;
-        if (!totalDur || totalDur <= 0) {
-          showToast('Could not determine video duration');
-          splitBtn.disabled = false; splitBtnText.textContent = 'Split Video';
-          return;
+          await splitOneFile(ffmpeg, entry, partsContainer, fi, totalFiles);
         }
 
-        // Calculate segments
-        let segments = [];
-        const mode = state.mode;
-
-        if (mode === 'parts') {
-          const count = Number(partsSlider.value);
-          const segDur = totalDur / count;
-          for (let i = 0; i < count; i++) {
-            segments.push({ start: i * segDur, end: Math.min((i + 1) * segDur, totalDur) });
-          }
-        } else if (mode === 'duration') {
-          const segDur = Number(durationSlider.value);
-          for (let start = 0; start < totalDur; start += segDur) {
-            segments.push({ start, end: Math.min(start + segDur, totalDur) });
-          }
-        } else { // size
-          const fileSizeMB = state.file.size / (1024 * 1024);
-          const targetMB = Number(sizeSlider.value);
-          const count = Math.max(1, Math.ceil(fileSizeMB / targetMB));
-          const segDur = totalDur / count;
-          for (let i = 0; i < count; i++) {
-            segments.push({ start: i * segDur, end: Math.min((i + 1) * segDur, totalDur) });
-          }
-        }
-
-        if (segments.length === 0) {
-          showToast('Could not determine split points');
-          splitBtn.disabled = false; splitBtnText.textContent = 'Split Video';
-          return;
-        }
-
-        const parts = [];
-        const baseName = state.file.name.replace(/\.[^.]+$/, '');
-        const needsReencode = resolutionSelect.value || fpsSelect.value || Number(qualitySlider.value) < 28;
-
-        state.progress = { text: '', total: segments.length };
-
-        for (let i = 0; i < segments.length; i++) {
-          const seg = segments[i];
-          const dur = seg.end - seg.start;
-          const outName = `${baseName}_part${i + 1}.${ext}`;
-
-          state.progress.text = `Part ${i + 1} of ${segments.length}`;
-          showProgress(`Part ${i + 1} of ${segments.length}...`, 0);
-
-          const args = [];
-
-          if (needsReencode) {
-            // Full re-encode
-            args.push('-ss', String(seg.start), '-i', inputName, '-t', String(dur));
-            if (ext === 'gif') {
-              args.push('-vf', `fps=10,scale=320:-1:flags=lanczos`);
-              if (resolutionSelect.value) {
-                args[args.length - 1] = `fps=10,scale=${resolutionSelect.value.replace('x', ':')}:flags=lanczos`;
-              }
-            } else {
-              args.push('-c:v', 'libx264', '-crf', qualitySlider.value);
-              if (resolutionSelect.value) args.push('-vf', `scale=${resolutionSelect.value}`);
-              if (fpsSelect.value) args.push('-r', fpsSelect.value);
-              args.push('-preset', 'fast', '-c:a', 'aac', '-b:a', '128k');
-            }
-          } else {
-            // Stream copy (fast)
-            args.push('-ss', String(seg.start), '-i', inputName, '-t', String(dur), '-c', 'copy');
-          }
-
-          args.push('-y', outName);
-
-          await ffmpeg.exec(args);
-
-          const data = ffmpeg.readFile(outName);
-          const blob = new Blob([data], { type: ext === 'gif' ? 'image/gif' : `video/${ext}` });
-          const url = URL.createObjectURL(blob);
-          parts.push({ name: outName, size: blob.size, url, blob });
-          ffmpeg.deleteFile(outName);
-        }
-
-        ffmpeg.deleteFile(inputName);
         hideProgress();
-        showOutput(parts);
+        outputHint.textContent = 'All done. Download individually or use Download All.';
+        updateOutputCount();
+        showToast(`Finished — ${state.outputParts.length} file${state.outputParts.length !== 1 ? 's' : ''} ready`);
       } catch (err) {
         console.error('Split error:', err);
         showToast('Error: ' + (err.message || 'Processing failed'));
         hideProgress();
       } finally {
         splitBtn.disabled = false;
-        if (state.outputParts.length === 0) splitBtnText.textContent = 'Split Video';
+        splitBtnText.textContent = 'Split Again';
       }
     }
 
-    function getExtension(name) {
-      const i = name.lastIndexOf('.');
-      return i >= 0 ? name.substring(i) : '.mp4';
-    }
-
     splitBtn.addEventListener('click', doSplit);
+    syncSizeUI(false);
+    syncPartsUI(false);
+    syncDurationUI(false);
     console.log('ClipForge ready');
-    showToast('Drop a video to get started');
+    showToast('Drop videos to get started');
   </script>
 </body>
 </html>
